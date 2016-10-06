@@ -269,3 +269,21 @@ void converInd(unsigned char **x, int nrows, int ncols, double **intImage){
 
 }
 
+void imgDouble2Char(double **doubleImage, int nrows, int ncols, unsigned char **charImage){
+    for (int i = 0; i<nrows; i++) {
+        for (int j = 0; j<ncols; j++) {
+            int value = floor(doubleImage[i][j]*255);
+            charImage[i][j] = value;
+        }
+    }
+}
+
+void imgInt2Char(int **intImage, int nrows, int ncols, unsigned char **charImage){
+    for (int i = 0; i<nrows; i++) {
+        for (int j = 0; j<ncols; j++) {
+            int value = floor(intImage[i][j]*255);
+            charImage[i][j] = value;
+        }
+    }
+}
+

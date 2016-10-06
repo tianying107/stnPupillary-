@@ -10,6 +10,7 @@
 		44AF22CF1DA306D400965DF6 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 44AF22CE1DA306D400965DF6 /* main.c */; };
 		44AF22D71DA3075600965DF6 /* functions.c in Sources */ = {isa = PBXBuildFile; fileRef = 44AF22D51DA3075600965DF6 /* functions.c */; };
 		44AF22DA1DA31C0600965DF6 /* stnImgOperaters.c in Sources */ = {isa = PBXBuildFile; fileRef = 44AF22D81DA31C0600965DF6 /* stnImgOperaters.c */; };
+		44AF22DD1DA588CA00965DF6 /* stnCurvatureAlg.c in Sources */ = {isa = PBXBuildFile; fileRef = 44AF22DB1DA588CA00965DF6 /* stnCurvatureAlg.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -31,6 +32,8 @@
 		44AF22D61DA3075600965DF6 /* functions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = functions.h; sourceTree = "<group>"; };
 		44AF22D81DA31C0600965DF6 /* stnImgOperaters.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stnImgOperaters.c; sourceTree = "<group>"; };
 		44AF22D91DA31C0600965DF6 /* stnImgOperaters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stnImgOperaters.h; sourceTree = "<group>"; };
+		44AF22DB1DA588CA00965DF6 /* stnCurvatureAlg.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stnCurvatureAlg.c; sourceTree = "<group>"; };
+		44AF22DC1DA588CA00965DF6 /* stnCurvatureAlg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stnCurvatureAlg.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +71,8 @@
 				44AF22CE1DA306D400965DF6 /* main.c */,
 				44AF22D81DA31C0600965DF6 /* stnImgOperaters.c */,
 				44AF22D91DA31C0600965DF6 /* stnImgOperaters.h */,
+				44AF22DB1DA588CA00965DF6 /* stnCurvatureAlg.c */,
+				44AF22DC1DA588CA00965DF6 /* stnCurvatureAlg.h */,
 			);
 			path = pupilAlg;
 			sourceTree = "<group>";
@@ -129,6 +134,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				44AF22DD1DA588CA00965DF6 /* stnCurvatureAlg.c in Sources */,
 				44AF22DA1DA31C0600965DF6 /* stnImgOperaters.c in Sources */,
 				44AF22CF1DA306D400965DF6 /* main.c in Sources */,
 				44AF22D71DA3075600965DF6 /* functions.c in Sources */,
@@ -258,6 +264,7 @@
 				44AF22D41DA306D400965DF6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
