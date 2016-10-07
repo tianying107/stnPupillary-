@@ -28,7 +28,7 @@ int main(int argc, const char * argv[]) {
     double **doubleImage, **px, **py, **out1, **out2;
     /* OPEN FILES */
     fpx = fopen("/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/frame_0001_image.pgm","r");
-    fpy = fopen("/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/output/output.pgm", "w");
+//    fpy = fopen("/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/output/output.pgm", "w");
     /* READ HEADER */
     if(read_pgm_hdr(fpx, &nrows, &ncols) < 0)
         error("not a PGM image or bpp > 8");
@@ -53,8 +53,8 @@ int main(int argc, const char * argv[]) {
     
     stnCurvaturePro(img1, nrows, ncols/2, out1);
     
-    
-    printf("vv %f\n",out1[100][100]);
+
+//    printf("vv %f\n",out1[100][100]);
     
 //    imgInt2Char(, <#int nrows#>, <#int ncols#>, <#unsigned char **charImage#>)
 //    /* WRITE THE IMAGE */
