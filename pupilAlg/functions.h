@@ -28,4 +28,11 @@ void initStnArray(stnArray *a, size_t initialSize);
 void insertStnArray(stnArray *a, int element);
 void freeStnArray(stnArray *a);
 
+#define max(a,b) \
+({ __typeof__ (a) _a = (a); \
+__typeof__ (b) _b = (b); \
+_a > _b ? _a : _b; })
+
+double sum(double x[], int arr_count);
+double stnInterp2(int nrows, int ncols, int intMatrix[nrows][ncols], double row, double col);
 #endif /* functions_h */

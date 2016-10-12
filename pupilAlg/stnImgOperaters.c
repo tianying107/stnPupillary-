@@ -7,8 +7,9 @@
 //
 
 #include "stnImgOperaters.h"
-
+#include <stdlib.h>
 extern void flood_fill(int ,int ,int , int **, int , int);
+extern void **matrix(int, int, int, int, int);
 static int count;
 void imageSplit(unsigned char **combinedImg, int nrows, int newWidth, unsigned char **img1, unsigned char **img2){
     for (int i = 0; i<nrows; i++) {
@@ -192,7 +193,7 @@ void stnMedianFilter(int **inputImg, int nrows, int ncols, int filterWidth, int 
 /**
  *stnFindCentral
  */
-void stnFindCentral(int **inputImg, int nrows, int ncols, int *centerX, int *centerY){
+void stnFindCentral(int **inputImg, int nrows, int ncols, stnPoint *centerPoint){
     double count = 0;
     int i,j;
     int x=0;
@@ -206,7 +207,145 @@ void stnFindCentral(int **inputImg, int nrows, int ncols, int *centerX, int *cen
             }
         }
     }
-    centerX[0] = round(((double)x)/count);
-    centerY[0] = round(((double)y)/count);
-    printf("center at row:%d col:%d\n",centerY[0],centerX[0]);
+    centerPoint->col = round(((double)x)/count);
+    centerPoint->row = round(((double)y)/count);
+    printf("center at row:%d col:%d\n",centerPoint->row,centerPoint->col);
 }
+
+/**
+ *stnBoundaryPoints
+ */
+void stnBoundaryPoint(int **inputImg, int nrows, int ncols, stnPoint *centerPoint, stnPoint *leftPoint, stnPoint *rightPoint){
+    int x = centerPoint->col;
+    int y = centerPoint->row;
+    int windowSize = 30;
+    //any holes within the pupil blob were classified as a corneal relection if the hole width was less than this value
+    //true point at here is black (i.e. the value of center point is 0)
+    
+    /**left boundary point*/
+    int sum = 0;
+    for (int i=0; i<windowSize && x-i>=0; i++) {
+        sum += inputImg[y][x-i];
+    }
+    //sum < windowSize means there is at least one point in the window is black
+    while (sum<windowSize && x) {
+        x--;
+        sum=0;
+        for (int i=0; (i<windowSize && x-i>=0); i++) {
+            sum += inputImg[y][x-i];
+        }
+    }
+    leftPoint->col = x+1;
+    leftPoint->row = y;
+
+    /**right boundary point*/
+    sum = 0;
+    for (int i=0; i<windowSize && x+i<ncols; i++) {
+        sum += inputImg[y][x+i];
+    }
+    while (sum<windowSize && x) {
+        x++;
+        sum=0;
+        for (int i=0; i<windowSize && x+i<ncols; i++) {
+            sum += inputImg[y][x+i];
+        }
+    }
+    rightPoint->col = x-1;
+    rightPoint->row = y;
+}
+
+/**
+ *stnContourBound
+ */
+void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, stnArray *directionArray, stnArray *contourMapRow, stnArray *contourMapCol){
+    int mapPlus2[8]={2,3,4,5,6,7,0,1};
+    int mapMinus1[8]={7,0,1,2,3,4,5,6};
+    int direction = 1; //initial direction is 1
+    int x = leftPoint->col;
+    int y = leftPoint->row;
+    initStnArray(directionArray, 1);
+    initStnArray(contourMapRow, 1);
+    initStnArray(contourMapCol, 1);
+    
+    int map[16] = {y-1,x+1,y-1,x,y-1,x-1,y,x-1,y+1,x-1,y+1,x,y+1,x+1,y,x+1};
+    direction = mapPlus2[direction];
+    for (int j=0; j<8; j++) {
+        if (inputImg[map[direction*2]][map[direction*2+1]]==1) {
+            direction = mapMinus1[direction];
+        }
+        else{
+            
+            insertStnArray(directionArray, direction);
+            insertStnArray(contourMapRow, y);
+            insertStnArray(contourMapCol, x);
+            y = map[direction*2];
+            x = map[direction*2+1];
+            break;
+        }
+    }
+    
+    while ((y-1) && (x-1) && (y+1<nrows) && (x+1<ncols) && (x!=leftPoint->col || y!=leftPoint->row)) {
+        int map[16] = {y-1,x+1,y-1,x,y-1,x-1,y,x-1,y+1,x-1,y+1,x,y+1,x+1,y,x+1};
+        direction = mapPlus2[direction];
+        for (int j=0; j<8; j++) {
+            if (inputImg[map[direction*2]][map[direction*2+1]]==1) {
+                direction = mapMinus1[direction];
+            }
+            else{
+                insertStnArray(directionArray, direction);
+                insertStnArray(contourMapRow, y);
+                insertStnArray(contourMapCol, x);
+                y = map[direction*2];
+                x = map[direction*2+1];
+                break;
+            }
+        }
+    }
+
+}
+/**
+ *stnCurvature
+ */
+double *stnCurvature(stnArray *directionArray, int windowSize){
+    int circleMap[8][8] = {{0,1,2,3,4,-3,-2,-1},
+                            {-1,0,1,2,3,4,-3,-2},
+                            {-2,-1,0,1,2,3,4,-3},
+                            {-3,-2,-1,0,1,2,3,4},
+                            {4,-3,-2,-1,0,1,2,3},
+                            {3,4,-3,-2,-1,0,1,2},
+                            {2,3,4,-3,-2,-1,0,1},
+                            {1,2,3,4,-3,-2,-1,0}};
+    int length =(int)directionArray->used;
+
+    
+//    double curvature[directionArray->used];
+    double *curvature = (double *)malloc(length*sizeof(double));
+    
+    stnArray newDirection;
+    initStnArray(&newDirection, 1);
+    for (int i=-(windowSize-1); i<length+windowSize-1; i++) {
+        if (i<0) {
+            insertStnArray(&newDirection, directionArray->array[length+i]);
+        }
+        else if (i>=length){
+            insertStnArray(&newDirection, directionArray->array[i-length]);
+        }
+        else insertStnArray(&newDirection, directionArray->array[i]);
+    }
+    for (int i=windowSize-1; i<length+windowSize-1; i++) {
+        int alp1=0, alp2=0;
+        for (int j=i-windowSize+1; j<i+1; j++) {
+            alp1 += newDirection.array[j];
+        }
+        for (int j=i; j<i+windowSize; j++) {
+            alp2 += newDirection.array[j];
+        }
+        curvature[i-windowSize+1]=stnInterp2(8, 8, circleMap, ((double)alp1)/windowSize, ((double)alp2)/windowSize);
+    }
+    return curvature;
+}
+
+
+
+
+

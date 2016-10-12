@@ -41,13 +41,25 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     stnMedianFilter(labelImg, nrows, ncols, 21, 21);
     
     /*find the blob central*/
-    int centerX, centerY;
-    stnFindCentral(labelImg, nrows, ncols, &centerX, &centerY);
-    printf("%d, %d\n",centerY,centerX);
+    stnPoint centerPoint;
+    stnFindCentral(labelImg, nrows, ncols, &centerPoint);
     
     /*left point and right point*/
+    stnPoint leftPoint, rightPoint;
+    stnBoundaryPoint(labelImg, nrows, ncols, &centerPoint, &leftPoint, &rightPoint);
+    printf("left point at row:%d col:%d\n",leftPoint.row, leftPoint.col);
+    printf("right point at row:%d col:%d\n",rightPoint.row, rightPoint.col);
     
+    /*contour*/
+    stnArray directionArray,contourMapRow,contourMapCol;
+    initStnArray(&directionArray, 1);
+    initStnArray(&contourMapRow, 1);
+    initStnArray(&contourMapCol, 1);
+    stnContourBound(labelImg, nrows, ncols, &leftPoint,&directionArray,&contourMapRow,&contourMapCol);
     
+    /*Curvature*/
+    double *curvature = stnCurvature(&directionArray, 15);
+    printf("index:%d curvature:%f\n",587,curvature[587]);
     
     
     

@@ -309,3 +309,36 @@ void freeStnArray(stnArray *a) {
     a->array = NULL;
     a->used = a->size = 0;
 }
+
+double sum(double x[], int arr_count){
+    int i = 0;
+    double my_sum = 0;
+    
+    for (i = 0; i < arr_count; i++){
+        my_sum += x[i];
+    }
+    return my_sum;
+}
+
+double stnInterp2(int nrows, int ncols, int intMatrix[nrows][ncols], double row, double col){
+    int x_min=0, x_max=7, y_min=0, y_max=7;
+    double mf, nf; // fractional parts
+    int m, n;// m and n are row and column indices
+   
+    // Find integer and fractional part of column index
+    nf = (ncols-1) * (col - x_min) / (x_max - x_min);
+    n = (int)nf;
+    nf = nf - n;
+    
+    // Find integer and fractional part of row index
+    mf = (nrows-1) * (row - y_min) / (y_max - y_min);
+    m = (int)mf;
+    mf = mf - m;
+    
+    // Calculate interpolated estimated
+    double result = (1-nf)*(1-mf)*intMatrix[m][n] + nf*(1-mf)*intMatrix[m][n+1]
+    + (1-nf)*mf*intMatrix[m+1][n] + nf*mf*intMatrix[m+1][n+1];
+    
+    return result;
+    
+}
