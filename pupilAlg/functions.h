@@ -35,4 +35,13 @@ _a > _b ? _a : _b; })
 
 double sum(double x[], int arr_count);
 double stnInterp2(int nrows, int ncols, int intMatrix[nrows][ncols], double row, double col);
+void detect_peak(
+                 const double*   data, /* the data */
+                 int             data_count, /* row count of data */
+                 stnArray*       peaks, /* emission peaks will be put here */
+                 double          delta, /* delta used for distinguishing peaks */
+                 double          threshold   /*threshold used for filter peaks below the value*/
+);
+void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols]);
+void stnEigenVector(int nSize, double intMatrix[nSize][nSize]);
 #endif /* functions_h */

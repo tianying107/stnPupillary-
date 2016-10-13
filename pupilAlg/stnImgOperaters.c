@@ -345,7 +345,58 @@ double *stnCurvature(stnArray *directionArray, int windowSize){
     return curvature;
 }
 
+/**
+ *stnSafePoints
+ */
+void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *breakPoints, stnPoint *rightPoint, stnArray *safeRows, stnArray *safeCols){
+    /*calculate left safe points upper and lower boundary index first*/
+    int leftUpperIndex = breakPoints->array[0];
+    int leftLowerIndex = breakPoints->array[(int)breakPoints->used - 1];
+    
+    /*then find out right point index in contour*/
+    int rightIndex = 0;
+    for (int i = 0; i<(int)contourRows->used; i++) {
+        if ((contourRows->array[i]==rightPoint->row)&&(contourCols->array[i]==rightPoint->col)) {
+            rightIndex = i;
+            break;
+        }
+    }
+    
+    /*using right point index to find right upper boundary index and right lower boundary index*/
+    int rightUpperIndex=0, rightLowerIndex=0;
+    for (int i = 0; i<(int)breakPoints->used; i++) {
+        if (rightIndex<breakPoints->array[i] && i>0) {
+            rightUpperIndex = breakPoints->array[i];
+            rightLowerIndex = breakPoints->array[i-1];
+            break;
+        }
+    }
+    
+    for (int i=0; i<(int)contourRows->used; i++) {
+        if (i<leftUpperIndex||i>leftLowerIndex||i>rightLowerIndex||i<rightUpperIndex) {
+            insertStnArray(safeRows, contourRows->array[i]);
+            insertStnArray(safeCols, contourCols->array[i]);
+        }
+    }
+}
 
+/**
+ *stnEllipseFitting
+ */
+void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols){
+    int i;
+    int length = (int)pointRows->used;
+    double d[6][length];
+    for (i=0; i<length; i++) {
+        d[0][i]=pow((double)pointCols->array[i],2);
+        d[1][i]=(double)pointCols->array[i] * (double)pointRows->array[i];
+        d[2][i]=pow((double)pointRows->array[i],2);
+        d[3][i]=(double)pointCols->array[i];
+        d[4][i]=(double)pointRows->array[i];
+        d[5][i]=1;
+    }
+    stnMatrixSquare(6, length, d);
+}
 
 
 

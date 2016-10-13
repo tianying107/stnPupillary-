@@ -47,8 +47,8 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     /*left point and right point*/
     stnPoint leftPoint, rightPoint;
     stnBoundaryPoint(labelImg, nrows, ncols, &centerPoint, &leftPoint, &rightPoint);
-    printf("left point at row:%d col:%d\n",leftPoint.row, leftPoint.col);
-    printf("right point at row:%d col:%d\n",rightPoint.row, rightPoint.col);
+//    printf("left point at row:%d col:%d\n",leftPoint.row, leftPoint.col);
+//    printf("right point at row:%d col:%d\n",rightPoint.row, rightPoint.col);
     
     /*contour*/
     stnArray directionArray,contourMapRow,contourMapCol;
@@ -59,7 +59,27 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     /*Curvature*/
     double *curvature = stnCurvature(&directionArray, 15);
-    printf("index:%d curvature:%f\n",587,curvature[587]);
+    
+    /*peaks and break points*/
+    stnArray peaks;
+    initStnArray(&peaks, 1);
+    detect_peak(curvature, (int)directionArray.used, &peaks, 0.3, 0.73);
+//    for (int index=0; index<(int)peaks.used; index++) {
+//        printf("%d,\n",peaks.array[index]);
+//    }
+
+    /*safe points index, the index of contourMapRow and contourMapCol*/
+    stnArray safeRows, safeCols;
+    initStnArray(&safeRows, 1);
+    initStnArray(&safeCols, 1);
+    stnSafePoints(&contourMapRow, &contourMapCol, &peaks, &rightPoint, &safeRows, &safeRows);
+    
+    
+    
+    /*ellipse fitting*/
+    stnEllipseFitting(&safeRows, &safeCols);
+    
+//    stnEigenVector(4, matri);
     
     
     

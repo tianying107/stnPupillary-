@@ -9,6 +9,7 @@
 #include "functions.h"
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <math.h>
 #include <stdlib.h> /* needed for malloc(), exit() */
 #include <string.h> /* needed for strcmp() */
@@ -342,3 +343,124 @@ double stnInterp2(int nrows, int ncols, int intMatrix[nrows][ncols], double row,
     return result;
     
 }
+
+/*detect peak*/
+void detect_peak(
+                const double*   data, /* the data */
+                int             data_count, /* row count of data */
+                stnArray*       peaks, /* emission peaks will be put here */
+                double          delta, /* delta used for distinguishing peaks */
+                double          threshold   /*threshold used for filter peaks below the value*/
+)
+{
+    int     i;
+    double  mx;
+    int     mx_pos = 0;
+    bool    positionUpdate=false;
+
+    mx = threshold;
+    
+    for(i = 0; i < data_count; i++)
+    {
+        if(data[i] > mx)
+        {
+            mx_pos = i;
+            mx = data[i];
+            positionUpdate = true;
+        }
+        
+        if(data[i] < mx - delta) {
+            if(positionUpdate){
+                insertStnArray(peaks, mx_pos);
+                positionUpdate = false;
+            }
+            
+            mx = max(data[i],threshold);
+        }
+    }
+    
+}
+
+/*eigen vector and eigen value using power method*/
+void stnEigenVector(int nSize, double intMatrix[nSize][nSize]){
+    int i,j,n;
+    n=nSize;
+    double z[nSize], e[nSize],zmax,emax,x[nSize];
+    x[0]=1;
+    for (i=1; i<nSize; i++) {
+        x[i]=0;
+    }
+    
+    do
+    {
+        for(i=0; i<n; i++)
+        {
+            z[i]=0;
+            for(j=0; j<n; j++)
+            {
+                z[i]=z[i]+intMatrix[i][j]*x[j];
+            }
+        }
+        zmax=fabs(z[0]);
+        for(i=1; i<n; i++)
+        {
+            if((fabs(z[i]))>zmax)
+                zmax=fabs(z[i]);
+        }
+        for(i=0; i<n; i++)
+        {
+            z[i]=z[i]/zmax;
+        }
+        for(i=0; i<n; i++)
+        {
+            e[i]=0;
+            e[i]=fabs((fabs(z[i]))-(fabs(x[i])));
+        }
+        emax=e[0];
+        for(i=1; i<n; i++)
+        {
+            if(e[i]>emax)
+                emax=e[i];
+        }
+        for(i=0; i<n; i++)
+        {
+            x[i]=z[i];
+        }
+    }while(emax>0.001);
+}
+
+/**
+ *do the matrix multiply U * U'
+ */
+void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols]){
+    int i, j, k;
+    double sum = 0;
+    double multiply[nrows][nrows];
+    
+        
+    for (i = 0; i < nrows; i++) {
+        for (j = 0; j < nrows; j++) {
+            for (k = 0; k < ncols; k++) {
+                sum = sum + matrix[i][k]*matrix[j][k];
+        }
+            
+            multiply[i][j] = sum;
+            sum = 0;
+        }
+    }
+    
+    for (i = 0; i < nrows; i++) {
+        for (j = 0; j < nrows; j++)
+            printf("%f\t", multiply[i][j]);
+        
+        printf("\n");
+    }
+
+}
+
+
+
+
+
+
+
