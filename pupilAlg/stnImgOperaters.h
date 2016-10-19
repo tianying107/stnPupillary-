@@ -25,4 +25,7 @@ void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, 
 double *stnCurvature(stnArray *directionArray, int windowSize);
 void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *breakPoints, stnPoint *rightPoint, stnArray *safeRows, stnArray *safeCols);
 void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols);
+void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, int parameters[3]);
+void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, int parameters[3]);
+void stnDrawPoints(stnArray *pointRows, stnArray *pointCols, unsigned char **inputImg, int nrows, int ncols, double **outputImg);
 #endif /* stnImgOperaters_h */

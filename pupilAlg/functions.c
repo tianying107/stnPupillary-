@@ -432,10 +432,11 @@ void stnEigenVector(int nSize, double intMatrix[nSize][nSize]){
 /**
  *do the matrix multiply U * U'
  */
-void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols]){
+void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols], double multiply[nrows][nrows]){
     int i, j, k;
     double sum = 0;
-    double multiply[nrows][nrows];
+    
+//    double multiply[nrows][nrows];
     
         
     for (i = 0; i < nrows; i++) {
@@ -448,19 +449,170 @@ void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols]){
             sum = 0;
         }
     }
-    
-    for (i = 0; i < nrows; i++) {
-        for (j = 0; j < nrows; j++)
-            printf("%f\t", multiply[i][j]);
-        
-        printf("\n");
-    }
 
+}
+/**
+ *do the matrix multiply 
+ */
+void stnMatrixMultiply(int nrows1, int nrows2, int ncols, double matrix1[nrows1][ncols], double matrix2[ncols][nrows2], double multiply[nrows1][nrows2]){
+    int i, j, k;
+    double sum = 0;
+    
+    //    double multiply[nrows][nrows];
+    
+    
+    for (i = 0; i < nrows1; i++) {
+        for (j = 0; j < nrows2; j++) {
+            for (k = 0; k < ncols; k++) {
+                sum = sum + matrix1[i][k]*matrix2[k][j];
+            }
+            
+            multiply[i][j] = sum;
+            sum = 0;
+        }
+    }
+    
+    
+    
 }
 
 
 
 
+/*
+ Recursive definition of determinate using expansion by minors.
+ */
+double Determinant(double **a,int n)
+{
+    int i,j,j1,j2;
+    double det = 0;
+    double **m = NULL;
+    
+    if (n < 1) { /* Error */
+        
+    } else if (n == 1) { /* Shouldn't get used */
+        det = a[0][0];
+    } else if (n == 2) {
+        det = a[0][0] * a[1][1] - a[1][0] * a[0][1];
+    } else {
+        det = 0;
+        for (j1=0;j1<n;j1++) {
+            m = malloc((n-1)*sizeof(double *));
+            for (i=0;i<n-1;i++)
+                m[i] = malloc((n-1)*sizeof(double));
+            for (i=1;i<n;i++) {
+                j2 = 0;
+                for (j=0;j<n;j++) {
+                    if (j == j1)
+                        continue;
+                    m[i-1][j2] = a[i][j];
+                    j2++;
+                }
+            }
+            det += pow(-1.0,j1+2.0) * a[0][j1] * Determinant(m,n-1);
+            for (i=0;i<n-1;i++)
+                free(m[i]);
+            free(m);
+        }
+    }
+    return(det);
+}
 
+/*
+ Find the cofactor matrix of a square matrix
+ */
+void CoFactor(double **a,int n,double **b)
+{
+    int i,j,ii,jj,i1,j1;
+    double det;
+    double **c;
+    
+    c = malloc((n-1)*sizeof(double *));
+    for (i=0;i<n-1;i++)
+        c[i] = malloc((n-1)*sizeof(double));
+    
+    for (j=0;j<n;j++) {
+        for (i=0;i<n;i++) {
+            
+            /* Form the adjoint a_ij */
+            i1 = 0;
+            for (ii=0;ii<n;ii++) {
+                if (ii == i)
+                    continue;
+                j1 = 0;
+                for (jj=0;jj<n;jj++) {
+                    if (jj == j)
+                        continue;
+                    c[i1][j1] = a[ii][jj];
+                    j1++;
+                }
+                i1++;
+            }
+            
+            /* Calculate the determinate */
+            det = Determinant(c,n-1);
+            
+            /* Fill in the elements of the cofactor */
+            b[i][j] = pow(-1.0,i+j+2.0) * det;
+        }
+    }
+    for (i=0;i<n-1;i++)
+        free(c[i]);
+    free(c);
+}
 
+/*
+ Transpose of a square matrix, do it in place
+ */
+void Transpose(double **a,int n)
+{
+    int i,j;
+    double tmp;
+    
+    for (i=1;i<n;i++) {
+        for (j=0;j<i;j++) {
+            tmp = a[i][j];
+            a[i][j] = a[j][i];
+            a[j][i] = tmp;
+        }
+    }
+}
 
+void stnMatrixInverse(int nrows, double squareMatrix[nrows][nrows]){
+    if (nrows==3) {
+        double a11,a12,a13,a21,a22,a23,a31,a32,a33;
+        a11 = squareMatrix[0][0];a12 = squareMatrix[0][1];a13 = squareMatrix[0][2];
+        a21 = squareMatrix[1][0];a22 = squareMatrix[1][1];a23 = squareMatrix[1][2];
+        a31 = squareMatrix[2][0];a32 = squareMatrix[2][1];a33 = squareMatrix[2][2];
+        double deta = a11*a22*a33+a21*a32*a13+a31*a12*a23-a11*a32*a23-a31*a22*a13-a21*a12*a33;
+        if (deta) {
+            squareMatrix[0][0] = (a22*a33-a23*a32)/deta;
+            squareMatrix[0][1] = (a13*a32-a12*a33)/deta;
+            squareMatrix[0][2] = (a12*a23-a13*a22)/deta;
+            squareMatrix[1][0] = (a23*a31-a21*a33)/deta;
+            squareMatrix[1][1] = (a11*a33-a13*a31)/deta;
+            squareMatrix[1][2] = (a13*a21-a11*a23)/deta;
+            squareMatrix[2][0] = (a21*a32-a22*a31)/deta;
+            squareMatrix[2][1] = (a12*a31-a11*a32)/deta;
+            squareMatrix[2][2] = (a11*a22-a12*a21)/deta;
+        }
+        
+        
+        
+    }
+    else{
+//        d = Determinant(squareMatrix, nrows);
+    }
+    
+}
+
+void imgCombineDouble2Char(double **doubleImage1, double **doubleImage2, int nrows, int ncols, unsigned char **charImage){
+    for (int i = 0; i<nrows; i++) {
+        for (int j = 0; j<ncols; j++) {
+            int value1 = floor(doubleImage1[i][j]*255);
+            int value2 = floor(doubleImage2[i][j]*255);
+            charImage[i][j] = value1;
+            charImage[i][j+ncols]=value2;
+        }
+    }
+}

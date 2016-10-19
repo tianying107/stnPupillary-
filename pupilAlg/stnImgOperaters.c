@@ -8,12 +8,14 @@
 
 #include "stnImgOperaters.h"
 #include <stdlib.h>
+#define PI 3.14159265
 extern void flood_fill(int ,int ,int , int **, int , int);
 extern void **matrix(int, int, int, int, int);
 static int count;
 void imageSplit(unsigned char **combinedImg, int nrows, int newWidth, unsigned char **img1, unsigned char **img2){
     for (int i = 0; i<nrows; i++) {
         for (int j = 0; j<newWidth; j++) {
+//            printf("col1:%d, col2:%d\n",j,j+newWidth);
             img1[i][j] = combinedImg[i][j];
             img2[i][j] = combinedImg[i][j+newWidth];
         }
@@ -140,13 +142,15 @@ int connectivityLabel(int **inputImg, int nrows, int ncols, int **labeledImg){
 void flood_fill(int x,int y,int label, int **labelImg, int nrows, int ncols){
     labelImg[x][y]=label;
     count++;
-    
+    if (count>160000) {
+        return;
+    }
     if(x>0&&labelImg[x-1][y]==0)flood_fill(x-1,y,label,labelImg,nrows,ncols);
     if(y>0&&labelImg[x][y-1]==0)flood_fill(x,y-1,label,labelImg,nrows,ncols);
     if(y<ncols-1&&labelImg[x][y+1]==0)flood_fill(x,y+1,label,labelImg,nrows,ncols);
-    if(y>0&&x<nrows-1&&labelImg[x+1][y-1]==0)flood_fill(x+1,y-1,label,labelImg,nrows,ncols);
+//    if(y>0&&x<nrows-1&&labelImg[x+1][y-1]==0)flood_fill(x+1,y-1,label,labelImg,nrows,ncols);
     if(x<nrows-1&&labelImg[x+1][y]==0)flood_fill(x+1,y,label,labelImg,nrows,ncols);
-    if(y<ncols-1&&x<nrows-1&&labelImg[x+1][y+1]==0)flood_fill(x+1,y+1,label,labelImg,nrows,ncols);
+//    if(y<ncols-1&&x<nrows-1&&labelImg[x+1][y+1]==0)flood_fill(x+1,y+1,label,labelImg,nrows,ncols);
     
 }
 
@@ -209,7 +213,7 @@ void stnFindCentral(int **inputImg, int nrows, int ncols, stnPoint *centerPoint)
     }
     centerPoint->col = round(((double)x)/count);
     centerPoint->row = round(((double)y)/count);
-    printf("center at row:%d col:%d\n",centerPoint->row,centerPoint->col);
+//    printf("center at row:%d col:%d\n",centerPoint->row,centerPoint->col);
 }
 
 /**
@@ -387,6 +391,7 @@ void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols){
     int i;
     int length = (int)pointRows->used;
     double d[6][length];
+    
     for (i=0; i<length; i++) {
         d[0][i]=pow((double)pointCols->array[i],2);
         d[1][i]=(double)pointCols->array[i] * (double)pointRows->array[i];
@@ -395,7 +400,87 @@ void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols){
         d[4][i]=(double)pointRows->array[i];
         d[5][i]=1;
     }
-    stnMatrixSquare(6, length, d);
+//    stnMatrixSquare(6, length, d);
+}
+
+/**
+ *stnCircleFitting
+ */
+void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, int parameters[3]){
+    int i;
+    
+    int length = (int)pointRows->used;
+    double d[3][length];//a matrix of [x; y; 1];
+    double squareMatrix[3][3];//a matrix that d*d'(aka the square matrix used in least square, inverse)
+    double rMatrix[length][1];
+    for (i=0; i<length; i++) {
+        d[0][i]=(double)pointCols->array[i];
+        d[1][i]=(double)pointRows->array[i];
+        d[2][i]=1;
+        rMatrix[i][0] = pow((double)pointCols->array[i], 2) + pow((double)pointRows->array[i], 2);
+    }
+
+
+    stnMatrixSquare(3, length, d,squareMatrix);
+    
+    /*inverse correct*/
+    stnMatrixInverse(3, squareMatrix);
+
+    
+    
+    double pMatrix[3][length];// the matrix (U'*U)\U'
+    stnMatrixMultiply(3, length, 3, squareMatrix, d, pMatrix);
+
+    double paraMatrix[3][1];
+    stnMatrixMultiply(3, 1, length, pMatrix, rMatrix, paraMatrix);
+
+    double xhat = round(paraMatrix[0][0]/2);//col
+    double yhat = round(paraMatrix[1][0]/2);//row
+    
+    int radius = round(sqrt(pow(xhat, 2)+pow(yhat, 2)+paraMatrix[2][0]));
+    int centerX = round(xhat);
+    int centerY = round(yhat);
+    parameters[0]=centerY;
+    parameters[1]=centerX;
+    parameters[2]=radius;
+    
+}
+
+/**
+ *stnCirclePoints
+ */
+void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, int parameters[3]){
+    int i;
+//    parameters[0]=centerY;
+//    parameters[1]=centerX;
+//    parameters[2]=radius;
+    
+    for (i=0; i<1000*2*PI; i++) {
+        int col = parameters[2]*cos(((double)i)/1000) + parameters[1];
+        int row = parameters[2]*sin(((double)i)/1000) + parameters[0];
+        insertStnArray(pointRows, row);
+        insertStnArray(pointCols, col);
+    }
+}
+
+/**
+ *stnCirclePoints
+ */
+void stnDrawPoints(stnArray *pointRows, stnArray *pointCols, unsigned char **inputImg, int nrows, int ncols, double **outputImg){
+    int i,j,row,col;
+    
+    for (i=0; i<nrows; i++) {
+        for (j=0; j<ncols; j++) {
+            outputImg[i][j]=((double)inputImg[i][j])/255;
+        }
+    }
+    for (i=0; i<(int)pointCols->used; i++) {
+        row = pointRows->array[i];
+        col = pointCols->array[i];
+        if (row>=0 && row<nrows && col>=0 && col<ncols) {
+            outputImg[row][col]=1;
+        }
+    }
 }
 
 

@@ -15,7 +15,8 @@ double detrminant(double a[250][250], int k);
 void cofactors(double num[250][250], int f, double inv[f][f]);
 void trans(double num[250][250], double fac[250][250], int r, double inv[r][r]);
 void converInd(unsigned char **x, int nrows, int ncols, double **intImage);
-
+void imgDouble2Char(double **doubleImage, int nrows, int ncols, unsigned char **charImage);
+void imgCombineDouble2Char(double **doubleImage1, double **doubleImage2, int nrows, int ncols, unsigned char **charImage);
 /**
  *stn Dynamic array struct and relate functions
  */
@@ -42,6 +43,8 @@ void detect_peak(
                  double          delta, /* delta used for distinguishing peaks */
                  double          threshold   /*threshold used for filter peaks below the value*/
 );
-void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols]);
+void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols], double multiply[nrows][nrows]);
+void stnMatrixMultiply(int nrows1, int nrows2, int ncols, double matrix1[nrows1][ncols], double matrix2[ncols][nrows2], double multiply[nrows1][nrows2]);
 void stnEigenVector(int nSize, double intMatrix[nSize][nSize]);
+void stnMatrixInverse(int nrows, double squareMatrix[nrows][nrows]);
 #endif /* functions_h */

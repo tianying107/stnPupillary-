@@ -17,11 +17,11 @@ extern void imgInt2Char(int **, int , int , unsigned char **);
 extern int connectivityLabel(int **, int , int , int **);
 
 void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **outputImg){
-    FILE *fpy;
+
     int i,j;
     unsigned char **y;
     y = (unsigned char **)matrix(nrows, ncols, 0, 0, sizeof(char));
-    fpy = fopen("/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/output/output.pgm", "w");
+    
     double **interImg=outputImg;
     /*HISTOGRAM EQULIZATION*/
     int lower=0; //EQULIZATION LOWER BOUND
@@ -30,7 +30,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     /*Threshold*/
     int **binearImg=(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
-    imageThreshold(interImg, nrows, ncols, (double)0.23, binearImg);
+    imageThreshold(interImg, nrows, ncols, (double)0.15, binearImg);
     
     /*Largest area blob*/
     int **labelImg =(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
@@ -64,40 +64,50 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     stnArray peaks;
     initStnArray(&peaks, 1);
     detect_peak(curvature, (int)directionArray.used, &peaks, 0.3, 0.73);
-//    for (int index=0; index<(int)peaks.used; index++) {
-//        printf("%d,\n",peaks.array[index]);
-//    }
 
     /*safe points index, the index of contourMapRow and contourMapCol*/
     stnArray safeRows, safeCols;
     initStnArray(&safeRows, 1);
     initStnArray(&safeCols, 1);
-    stnSafePoints(&contourMapRow, &contourMapCol, &peaks, &rightPoint, &safeRows, &safeRows);
+    stnSafePoints(&contourMapRow, &contourMapCol, &peaks, &rightPoint, &safeRows, &safeCols);
     
     
     
-    /*ellipse fitting*/
-    stnEllipseFitting(&safeRows, &safeCols);
+//    /*ellipse fitting*/
+//    stnEllipseFitting(&safeRows, &safeCols);
     
-//    stnEigenVector(4, matri);
+    /*circle fitting*/
+    int parameters[3];
+    stnCircleFitting(&safeRows, &safeCols, parameters);
+//    printf("center: %d,%d, radius:%d\n",parameters[1],parameters[0],parameters[2]);
+
+    /*circle points*/
+    stnArray circleRows, circleCols;
+    initStnArray(&circleCols, 1);
+    initStnArray(&circleRows, 1);
+    stnCirclePoints(&circleRows, &circleCols, parameters);
     
+    /*draw the circle*/
+    stnDrawPoints(&circleRows, &circleCols, inputImg, nrows, ncols, outputImg);
+
+    //release memory
+    freeStnArray(&directionArray);
+    freeStnArray(&contourMapRow);
+    freeStnArray(&contourMapCol);
+    freeStnArray(&peaks);
+    freeStnArray(&safeRows);
+    freeStnArray(&safeCols);
+    freeStnArray(&circleRows);
+    freeStnArray(&circleCols);
     
-    
-    outputImg = interImg;
-    
-    
-    
-    
-    
-    
-    
-    imgInt2Char(labelImg, nrows, ncols, y);
-        /* WRITE THE IMAGE */
-        fprintf(fpy, "P5\n%d %d\n255\n", ncols, nrows);
-        for(i = 0; i < nrows; i++)
-            if(fwrite(&y[i][0], sizeof(char), ncols, fpy) != ncols)
-                error("can't write the image");
-    
-        /* CLOSE FILE & QUIT */
-        fclose(fpy);
+//    imgDouble2Char(outputImg, nrows, ncols, y);
+////    imgInt2Char(outputImg, nrows, ncols, y);
+//        /* WRITE THE IMAGE */
+//        fprintf(fpy, "P5\n%d %d\n255\n", ncols, nrows);
+//        for(i = 0; i < nrows; i++)
+//            if(fwrite(&y[i][0], sizeof(char), ncols, fpy) != ncols)
+//                error("can't write the image");
+//    
+//        /* CLOSE FILE & QUIT */
+//        fclose(fpy);
 }
