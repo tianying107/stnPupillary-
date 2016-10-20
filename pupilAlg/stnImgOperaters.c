@@ -3,7 +3,9 @@
 //  pupilAlg
 //
 //  Created by st chen on 16/10/3.
-//  Copyright © 2016年 Star Chen. All rights reserved.
+//  Copyright © 2016 Siteng Chen. All rights reserved.
+//  For Visual and Autonomous Exploration Systems Research Laboratory, University of Arizona
+//  Prof. Wolfgang Fink
 //
 
 #include "stnImgOperaters.h"
@@ -142,7 +144,7 @@ int connectivityLabel(int **inputImg, int nrows, int ncols, int **labeledImg){
 void flood_fill(int x,int y,int label, int **labelImg, int nrows, int ncols){
     labelImg[x][y]=label;
     count++;
-    if (count>160000) {
+    if (count>170000) {
         return;
     }
     if(x>0&&labelImg[x-1][y]==0)flood_fill(x-1,y,label,labelImg,nrows,ncols);

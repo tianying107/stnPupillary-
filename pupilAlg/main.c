@@ -3,7 +3,9 @@
 //  pupilAlg
 //
 //  Created by st chen on 16/10/3.
-//  Copyright © 2016年 Star Chen. All rights reserved.
+//  Copyright © 2016 Siteng Chen. All rights reserved.
+//  For Visual and Autonomous Exploration Systems Research Laboratory, University of Arizona
+//  Prof. Wolfgang Fink
 //
 
 #include <stdio.h>
@@ -26,7 +28,7 @@ int main(int argc, const char * argv[]) {
     unsigned char **x, **y,**img1,**img2;
     double **doubleImage, **px, **py, **out1, **out2;
     /* OPEN FILES */
-    for (int index=310; index<354; index++) {
+    for (int index=186; index<209; index++) {
         char name[] = "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/frame_0001_image.pgm";
         snprintf(name, sizeof(name), "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/frame_%.4d_image.pgm", index);
 //        printf("%s\n",name);

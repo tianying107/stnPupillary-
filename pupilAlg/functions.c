@@ -3,7 +3,9 @@
 //  ImageSnake
 //
 //  Created by st chen on 16/6/14.
-//  Copyright © 2016年 Star Chen. All rights reserved.
+//  Copyright © 2016 Siteng Chen. All rights reserved.
+//  For Visual and Autonomous Exploration Systems Research Laboratory, University of Arizona
+//  Prof. Wolfgang Fink
 //
 
 #include "functions.h"
