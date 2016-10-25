@@ -76,7 +76,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     
 //    /*ellipse fitting*/
-//    stnEllipseFitting(&safeRows, &safeCols);
+    stnEllipseFitting(&safeRows, &safeCols);
     
     /*circle fitting*/
     int parameters[3];

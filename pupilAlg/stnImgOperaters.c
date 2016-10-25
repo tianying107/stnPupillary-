@@ -390,9 +390,12 @@ void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *break
  *stnEllipseFitting
  */
 void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols){
-    int i;
+    int i,j;
     int length = (int)pointRows->used;
     double d[6][length];
+    
+    double squareMatrix[6][6];//a matrix that d*d'(aka the square matrix used in least square, inverse)
+    
     
     for (i=0; i<length; i++) {
         d[0][i]=pow((double)pointCols->array[i],2);
@@ -402,7 +405,30 @@ void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols){
         d[4][i]=(double)pointRows->array[i];
         d[5][i]=1;
     }
-//    stnMatrixSquare(6, length, d);
+    stnMatrixSquare(6, length, d, squareMatrix);
+    double **squarePoint =(double **)matrix(6, 6, 0, 0, sizeof(double));
+    for (i=0; i<6; i++) {
+        for (j=0; j<6; j++) {
+            squarePoint[i][j]=squareMatrix[i][j];
+        }
+    }
+    
+    
+    double det = Determinant(squarePoint, 6);
+    printf("det = %f\n",det);
+    double **bMatrix =(double **)matrix(6, 6, 0, 0, sizeof(double));
+    if (det!=0) {
+        CoFactor(squarePoint, 6, bMatrix);
+        Transpose(bMatrix, 6);
+        for (i=0; i<6; i++) {
+            for (j=0; j<6; j++) {
+//                squarePoint[i][j]=squareMatrix[i][j];
+                printf("%f  ",bMatrix[i][j]/det);
+            }
+            printf("\n");
+        }
+    }
+    
 }
 
 /**

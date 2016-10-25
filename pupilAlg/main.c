@@ -29,6 +29,36 @@ int main(int argc, const char * argv[]) {
     double **doubleImage, **px, **py, **out1, **out2;
     /* OPEN FILES */
     for (int index=186; index<209; index++) {
+        
+        double **test =(double **)matrix(6, 6, 0, 0, sizeof(double));
+
+//        double circleMap[6][6] = {{1,2,3,4,5,6},
+//            {2,3,4,5,6,1},
+//            {3,4,5,6,1,2},
+//            {4,5,6,1,2,3},
+//            {5,6,1,2,3,4},
+//            {6,1,2,3,4,5}};
+//        double circleMap[5][5] = {{1,2,3,4,5},
+//                        {2,3,4,5,6},
+//                        {3,4,5,6,1},
+//                        {4,5,6,1,2},
+//                        {5,6,1,2,3}};
+        test[0][0]=1;
+        test[0][1]=-2;
+        test[0][2]=4;
+        test[1][0]=-5;
+        test[1][1]=2;
+        test[1][2]=0;
+        test[2][0]=1;
+        test[2][1]=0;
+        test[2][2]=3;
+//        double det = Determinant(test, 3);
+//        printf("det = %f\n",det);
+//        stnMatrixInverse(6, circleMap);
+        
+        
+        
+        
         char name[] = "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/frame_0001_image.pgm";
         snprintf(name, sizeof(name), "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/frame_%.4d_image.pgm", index);
 //        printf("%s\n",name);
