@@ -31,6 +31,10 @@ void initStnArray(stnArray *a, size_t initialSize);
 void insertStnArray(stnArray *a, int element);
 void freeStnArray(stnArray *a);
 
+
+/**
+ *funtion max(a,b)
+ */
 #define max(a,b) \
 ({ __typeof__ (a) _a = (a); \
 __typeof__ (b) _b = (b); \
@@ -47,13 +51,10 @@ void detect_peak(
 );
 void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols], double multiply[nrows][nrows]);
 void stnMatrixMultiply(int nrows1, int nrows2, int ncols, double matrix1[nrows1][ncols], double matrix2[ncols][nrows2], double multiply[nrows1][nrows2]);
-void stnEigenVector(int nSize, double intMatrix[nSize][nSize]);
+double *stnEigenVector(int nSize, double intMatrix[nSize][nSize]);
 void stnMatrixInverse(int nrows, double squareMatrix[nrows][nrows]);
 
 
-double determinant(int k,double a[k][k]);
-void transpose(double num[25][25], double fac[25][25], int r);
-void cofactor(double num[25][25], int f);
 
 double Determinant(double **a,int n);
 void CoFactor(double **a,int n,double **b);

@@ -18,7 +18,7 @@ extern void error(const char *);
 extern void imgInt2Char(int **, int , int , unsigned char **);
 extern int connectivityLabel(int **, int , int , int **);
 
-void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **outputImg){
+void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **outputImg, double **outputppm){
 
     int i,j;
     unsigned char **y;
@@ -32,7 +32,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     /*Threshold*/
     int **binearImg=(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
-    imageThreshold(interImg, nrows, ncols, (double)0.15, binearImg);
+    imageThreshold(interImg, nrows, ncols, (double)0.16, binearImg);
     
     /*Largest area blob*/
     int **labelImg =(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
@@ -74,22 +74,37 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     stnSafePoints(&contourMapRow, &contourMapCol, &peaks, &rightPoint, &safeRows, &safeCols);
     
     
+    /*******Ellipse*******/
+    /*ellipse fitting*/
+    int ellipseParameters[5];
+    stnEllipseFitting(&safeRows, &safeCols, &centerPoint,ellipseParameters);
+    int ellipse[3];
+    ellipse[0]=ellipseParameters[0];ellipse[1]=ellipseParameters[1];ellipse[2]=ellipseParameters[4];
+    /*ellipse points*/
+    stnArray ellipseRows, ellipseCols;
+    initStnArray(&ellipseCols, 1);
+    initStnArray(&ellipseRows, 1);
+    stnCirclePoints(&ellipseRows, &ellipseCols, ellipse);
     
-//    /*ellipse fitting*/
-    stnEllipseFitting(&safeRows, &safeCols);
-    
+    /*******Circle*******/
     /*circle fitting*/
     int parameters[3];
     stnCircleFitting(&safeRows, &safeCols, parameters);
-//    printf("center: %d,%d, radius:%d\n",parameters[1],parameters[0],parameters[2]);
-
     /*circle points*/
     stnArray circleRows, circleCols;
     initStnArray(&circleCols, 1);
     initStnArray(&circleRows, 1);
     stnCirclePoints(&circleRows, &circleCols, parameters);
     
+    
+    /*convert grayscale to rgb using equalized image*/
+    stnGray2RGB(interImg, nrows, ncols, outputppm);
+    
     /*draw the circle*/
+    double redColor[3] = {1,0,0};
+    double blueColor[3] = {0,0,1};
+    stnDrawColorPoints(&circleRows, &circleCols, outputppm, nrows, ncols, redColor);
+    stnDrawColorPoints(&ellipseRows, &ellipseCols, outputppm, nrows, ncols, blueColor);
     stnDrawPoints(&circleRows, &circleCols, inputImg, nrows, ncols, outputImg);
 
     //release memory

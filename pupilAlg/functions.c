@@ -66,6 +66,7 @@ void error(const char *msg)
     exit(1);
 }
 
+
 /* DYNAMICALLY ALLOCATE A PSEUDO 2-D ARRAY */
 
 /* This function allocates a pseudo 2-D array of size nrows x ncols. */
@@ -384,10 +385,11 @@ void detect_peak(
 }
 
 /*eigen vector and eigen value using power method*/
-void stnEigenVector(int nSize, double intMatrix[nSize][nSize]){
+double *stnEigenVector(int nSize, double intMatrix[nSize][nSize]){
     int i,j,n;
     n=nSize;
-    double z[nSize], e[nSize],zmax,emax,x[nSize];
+    double z[nSize], e[nSize],zmax,emax;//,x[nSize];
+    double *x = (double *)malloc(nSize*sizeof(double));
     x[0]=1;
     for (i=1; i<nSize; i++) {
         x[i]=0;
@@ -429,6 +431,7 @@ void stnEigenVector(int nSize, double intMatrix[nSize][nSize]){
             x[i]=z[i];
         }
     }while(emax>0.001);
+    return x;
 }
 
 /**
@@ -480,46 +483,6 @@ void stnMatrixMultiply(int nrows1, int nrows2, int ncols, double matrix1[nrows1]
 
 
 
-
-/*
- Recursive definition of determinate using expansion by minors.
- */
-//double Determinant(double **a,int n)
-//{
-//    int i,j,j1,j2;
-//    double det = 0;
-//    double **m = NULL;
-//    
-//    if (n < 1) { /* Error */
-//        
-//    } else if (n == 1) { /* Shouldn't get used */
-//        det = a[0][0];
-//    } else if (n == 2) {
-//        det = a[0][0] * a[1][1] - a[1][0] * a[0][1];
-//    } else {
-//        det = 0;
-//        for (j1=0;j1<n;j1++) {
-//            m = malloc((n-1)*sizeof(double *));
-//            for (i=0;i<n-1;i++)
-//                m[i] = malloc((n-1)*sizeof(double));
-//            for (i=1;i<n;i++) {
-//                j2 = 0;
-//                for (j=0;j<n;j++) {
-//                    if (j == j1)
-//                        continue;
-//                    m[i-1][j2] = a[i][j];
-//                    j2++;
-//                }
-//            }
-//            det += pow(-1.0,j1+2.0) * a[0][j1] * Determinant(m,n-1);
-//            for (i=0;i<n-1;i++)
-//                free(m[i]);
-//            free(m);
-//        }
-//    }
-//    return(det);
-//}
-//
 /*
  Find the cofactor matrix of a square matrix
  */
@@ -612,116 +575,8 @@ double Determinant(double **a,int n){
     }
     return(det);
 }
-double determinant(int k,double a[k][k]){
-    
-    float s = 1;
-    double b[k][k], det = 0;
-    int i, j, m, n, c;
 
-    if (k == 1)
-    {
-        printf("a[0][0]%f\n",a[0][0]);
-        return (a[0][0]);
-    }
-    else
-    {
-        det = 0;
-        for (c = 0; c < k; c++)
-        {
-            m = 0;
-            n = 0;
-            for (i = 0;i < k; i++)
-            {
-                for (j = 0 ;j < k; j++)
-                {
-                    b[i][j] = 0;
-                    if (i != 0 && j != c)
-                    {
-                        b[m][n] = a[i][j];
-//                        printf("a[%d][%d]=%f\n",i,i,a[i][j]);
-//                        printf("b[%d][%d]=%f\n",m,n,b[m][n]);
-                        if (n < (k - 2))
-                            n++;
-                        else
-                        {
-                            n = 0;
-                            m++;
-                        }
-                    }
-                }
-            }
-            det = det + s * (a[0][c] * determinant(k - 1,b));
-            s = -1 * s;
-        }
-    }
-    
-    return det;
-}
-
-void cofactor(double num[25][25], int f){
-    double b[25][25], fac[25][25];
-    int p, q, m, n, i, j;
-    for (q = 0;q < f; q++)
-    {
-        for (p = 0;p < f; p++)
-        {
-            m = 0;
-            n = 0;
-            for (i = 0;i < f; i++)
-            {
-                for (j = 0;j < f; j++)
-                {
-                    if (i != q && j != p)
-                    {
-                        b[m][n] = num[i][j];
-                        if (n < (f - 2))
-                            n++;
-                        else
-                        {
-                            n = 0;
-                            m++;
-                        }
-                    }
-                }
-            }
-            fac[q][p] = pow(-1, q + p) * determinant(b, f - 1);
-        }
-    }
-    transpose(num, fac, f);
-}
-/*Finding transpose of matrix*/
-void transpose(double num[25][25], double fac[25][25], int r){
-    int i, j;
-    double b[25][25], inverse[25][25], d;
-    
-    for (i = 0;i < r; i++)
-    {
-        for (j = 0;j < r; j++)
-        {
-            b[i][j] = fac[j][i];
-        }
-    }
-    d = determinant(num, r);
-    for (i = 0;i < r; i++)
-    {
-        for (j = 0;j < r; j++)
-        {
-            inverse[i][j] = b[i][j] / d;
-        }
-    }
-    printf("\n\n\nThe inverse of matrix is : \n");
-    
-    for (i = 0;i < r; i++)
-    {
-        for (j = 0;j < r; j++)
-        {
-            printf("\t%f", inverse[i][j]);
-        }
-        printf("\n");
-    }
-}
 void stnMatrixInverse(int nrows, double squareMatrix[nrows][nrows]){
-    double det;
     if (nrows==3) {
         double a11,a12,a13,a21,a22,a23,a31,a32,a33;
         a11 = squareMatrix[0][0];a12 = squareMatrix[0][1];a13 = squareMatrix[0][2];
@@ -741,17 +596,26 @@ void stnMatrixInverse(int nrows, double squareMatrix[nrows][nrows]){
         }
     }
     else if (nrows<25){
-//        det = Determinant(nrows,squareMatrix);
-////        det = determinant(nrows,squareMatrix);
-//        if (det!=0) {
-//            cofactor(squareMatrix, nrows);
-////            for (int i=0; i<nrows; i++) {
-////                for (int j=0; j<nrows; j++) {
-////                    printf("%f  ",squareMatrix[i][j]);
-////                }
-////                printf("\n");
-////            }
-//        }
+        int i,j;
+        double **squarePoint =(double **)matrix(nrows, nrows, 0, 0, sizeof(double));
+        for (i=0; i<nrows; i++) {
+            for (j=0; j<nrows; j++) {
+                squarePoint[i][j]=squareMatrix[i][j];
+            }
+        }
+        
+        
+        double det = Determinant(squarePoint, nrows);
+        double **bMatrix =(double **)matrix(nrows, nrows, 0, 0, sizeof(double));
+        if (det!=0) {
+            CoFactor(squarePoint, nrows, bMatrix);
+//            Transpose(bMatrix, nrows);
+            for (i=0; i<nrows; i++) {
+                for (j=0; j<nrows; j++) {
+                    squareMatrix[i][j]=bMatrix[j][i]/det;
+                }
+            }
+        }
     }
     
 }

@@ -389,46 +389,53 @@ void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *break
 /**
  *stnEllipseFitting
  */
-void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols){
-    int i,j;
+void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, int parameters[5]){
+    int i;
     int length = (int)pointRows->used;
-    double d[6][length];
-    
+    double D[6][length];
+    double *eigenParameter;
     double squareMatrix[6][6];//a matrix that d*d'(aka the square matrix used in least square, inverse)
     
     
     for (i=0; i<length; i++) {
-        d[0][i]=pow((double)pointCols->array[i],2);
-        d[1][i]=(double)pointCols->array[i] * (double)pointRows->array[i];
-        d[2][i]=pow((double)pointRows->array[i],2);
-        d[3][i]=(double)pointCols->array[i];
-        d[4][i]=(double)pointRows->array[i];
-        d[5][i]=1;
+        D[0][i]=pow((double)pointCols->array[i] - centerPoint->col,2);
+        D[1][i]=((double)pointCols->array[i] - centerPoint->col)* ((double)pointRows->array[i] - centerPoint->row);
+        D[2][i]=pow((double)pointRows->array[i] - centerPoint->row,2);
+        D[3][i]=(double)pointCols->array[i] - centerPoint->col;
+        D[4][i]=(double)pointRows->array[i] - centerPoint->row;
+        D[5][i]=1;
     }
-    stnMatrixSquare(6, length, d, squareMatrix);
-    double **squarePoint =(double **)matrix(6, 6, 0, 0, sizeof(double));
-    for (i=0; i<6; i++) {
-        for (j=0; j<6; j++) {
-            squarePoint[i][j]=squareMatrix[i][j];
-        }
-    }
+    stnMatrixSquare(6, length, D, squareMatrix);
+    stnMatrixInverse(6, squareMatrix);
     
+    double C[6][6]={{0,0,2,0,0,0},
+                    {0,-1,0,0,0,0},
+                    {2,0,0,0,0,0},
+                    {0,0,0,0,0,0},
+                    {0,0,0,0,0,0},
+                    {0,0,0,0,0,0}};
+    double pMatrix[6][6];
+    stnMatrixMultiply(6, 6, 6, squareMatrix, C, pMatrix);
+    eigenParameter=stnEigenVector(6, pMatrix);
+    double a=eigenParameter[0],b=eigenParameter[1]/2,c=eigenParameter[2],d=eigenParameter[3]/2,e=eigenParameter[4]/2,f=eigenParameter[5];
+    double det0,detm,l1,l2;
+    double ra,rb,radius,centerX,centerY;
+    detm = a*c-b*b;
+    det0 = a*c*f+d*b*e+e*d*b-a*e*e-c*d*d-f*b*b;
+    l2=(-(a+c)+sqrt(pow(a+c, 2)-4*(a*c-b*b)))/2;
+    l1=(-(a+c)-sqrt(pow(a+c, 2)-4*(a*c-b*b)))/2;
     
-    double det = Determinant(squarePoint, 6);
-    printf("det = %f\n",det);
-    double **bMatrix =(double **)matrix(6, 6, 0, 0, sizeof(double));
-    if (det!=0) {
-        CoFactor(squarePoint, 6, bMatrix);
-        Transpose(bMatrix, 6);
-        for (i=0; i<6; i++) {
-            for (j=0; j<6; j++) {
-//                squarePoint[i][j]=squareMatrix[i][j];
-                printf("%f  ",bMatrix[i][j]/det);
-            }
-            printf("\n");
-        }
-    }
+    ra=sqrt((det0/detm)/l1);
+    rb=sqrt((det0/detm)/l2);
+    radius = (ra+rb)/2;
+    centerX = (4*b*e-c*d)/(4*a*c-4*pow(b, 2))+centerPoint->col;
+    centerY = (4*b*d-a*e)/(4*a*c-4*pow(b, 2))+centerPoint->row;
     
+    parameters[0]=centerY;
+    parameters[1]=centerX;
+    parameters[2]=rb;
+    parameters[3]=ra;
+    parameters[4]=radius;
 }
 
 /**
@@ -455,7 +462,6 @@ void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, int parameters[3
     stnMatrixInverse(3, squareMatrix);
 
     
-    
     double pMatrix[3][length];// the matrix (U'*U)\U'
     stnMatrixMultiply(3, length, 3, squareMatrix, d, pMatrix);
 
@@ -479,10 +485,6 @@ void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, int parameters[3
  */
 void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, int parameters[3]){
     int i;
-//    parameters[0]=centerY;
-//    parameters[1]=centerX;
-//    parameters[2]=radius;
-    
     for (i=0; i<1000*2*PI; i++) {
         int col = parameters[2]*cos(((double)i)/1000) + parameters[1];
         int row = parameters[2]*sin(((double)i)/1000) + parameters[0];
@@ -511,5 +513,27 @@ void stnDrawPoints(stnArray *pointRows, stnArray *pointCols, unsigned char **inp
     }
 }
 
+void stnDrawColorPoints(stnArray *pointRows, stnArray *pointCols, double **inputImg, int nrows, int ncols, double color[3]){
+    int i,row,col;
+    for (i=0; i<(int)pointCols->used; i++) {
+        row = pointRows->array[i];
+        col = pointCols->array[i];
+        if (row>=0 && row<nrows && col>=0 && col<ncols) {
+            
+            inputImg[row][3*col]=color[0];
+            inputImg[row][3*col+1]=color[1];
+            inputImg[row][3*col+2]=color[2];
+        }
+    }
+}
 
-
+void stnGray2RGB(double **inputImg, int nrows, int ncols, double **outputImg){
+    int i,j;
+    for (i=0; i<nrows; i++) {
+        for (j=0; j<ncols; j++) {
+            outputImg[i][3*j] = inputImg[i][j];
+            outputImg[i][3*j+1] = inputImg[i][j];
+            outputImg[i][3*j+2] = inputImg[i][j];
+        }
+    }
+}

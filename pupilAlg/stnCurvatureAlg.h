@@ -12,6 +12,6 @@
 #define stnCurvatureAlg_h
 
 #include <stdio.h>
-void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **outputImg);
+void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **outputImg, double **outputppm);
 //#include "stnImgOperaters.h"
 #endif /* stnCurvatureAlg_h */

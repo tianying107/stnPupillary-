@@ -11,9 +11,13 @@
 #ifndef stnImgOperaters_h
 #define stnImgOperaters_h
 
+
 #include <stdio.h>
 #include <math.h>
 #include "functions.h"
+
+#define stnRed (double color[3]={1,0,0})
+
 typedef struct {
     int row;
     int col;
@@ -26,8 +30,10 @@ void stnBoundaryPoint(int **inputImg, int nrows, int ncols, stnPoint *centerPoin
 void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, stnArray *directionArray, stnArray *contourMapRow, stnArray *contourMapCol);
 double *stnCurvature(stnArray *directionArray, int windowSize);
 void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *breakPoints, stnPoint *rightPoint, stnArray *safeRows, stnArray *safeCols);
-void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols);
+void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, int parameters[5]);
 void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, int parameters[3]);
 void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, int parameters[3]);
 void stnDrawPoints(stnArray *pointRows, stnArray *pointCols, unsigned char **inputImg, int nrows, int ncols, double **outputImg);
+void stnDrawColorPoints(stnArray *pointRows, stnArray *pointCols, double **inputImg, int nrows, int ncols, double color[3]);
+void stnGray2RGB(double **inputImg, int nrows, int ncols, double **outputImg);
 #endif /* stnImgOperaters_h */
