@@ -29,7 +29,7 @@ int main(int argc, const char * argv[]) {
     unsigned char **x, **y,**img1,**img2;
     double **doubleImage, **px, **py, **out1, **out2, **ppm1, **ppm2;
     /* OPEN FILES */
-    for (int index=1; index<20; index++) {
+    for (int index=1; index<2; index++) {
 
         
         char name[] = "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/frame_0001_image.pgm";
