@@ -25,6 +25,7 @@ typedef struct {
 } stnPoint;
 
 void filterBlobWithLabel(int **labelImage, int nrows, int ncols, int label);
+bool growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols);
 void stnMedianFilter(int **inputImg, int nrows, int ncols, int filterWidth, int filterHeight);
 void stnFindCentral(int **inputImg, int nrows, int ncols, stnPoint *centerPoint);
 void stnBoundaryPoint(int **inputImg, int nrows, int ncols, stnPoint *centerPoint, stnPoint *leftPoint, stnPoint *rightPoint);

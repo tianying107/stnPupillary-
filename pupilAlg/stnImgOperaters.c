@@ -89,6 +89,49 @@ void imageThreshold(double **inputImg, int nrows, int ncols, double threshold, i
     }
 }
 
+
+/**
+ *Growth Circle algorithm, an algorithm to label the largest blob
+ *
+ */
+bool growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols){
+    bool allWhite = false;
+    int radius=0;
+    int i,j,count;
+    
+    for (radius=0; radius<min(min(centerPoint->col, ncols-centerPoint->col), min(centerPoint->row, nrows-centerPoint->row)); radius++) {
+        count = 0;
+        for (i=0; i<500*PI; i++) {
+            int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
+            int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
+            int value1 = inputImg[row][col];
+            int value2 = inputImg[row][col-centerPoint->col];
+            int value3 = inputImg[row-centerPoint->row][col];
+            int value4 = inputImg[row-centerPoint->row][col-centerPoint->col];
+            if (!(value1||value2||value3||value4)) {
+                break;
+            }
+            else count++;
+        }
+        if (count==500) {
+            allWhite = true;
+            break;
+        }
+    }
+    
+    if (allWhite) {
+        for (i=0; i<nrows; i++) {
+            for (j=0; j<ncols; j++) {
+                if ((i*i+j*j)>radius*radius) {
+                    inputImg[i][j] = 0;
+                }
+            }
+        }
+    }
+    return allWhite;
+}
+
+
 /**
  *Version 1.0
  *connectivityLabel is a function to isolate blobs and label from the input image using 8-neighbour connectivity analysis
@@ -137,34 +180,7 @@ int connectivityLabel(int **inputImg, int nrows, int ncols, int **labeledImg){
     
 }
 
-/**
- *Growth Circle algorithm, an algorithm to label the largest blob
- *
- */
-bool growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols){
-    bool allWhite = false;
-    int radius=0;
-    int i;
-    for (radius=0; radius<nrows; radius++) {
-        
-        for (i=0; i<500*PI; i++) {
-            int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
-            int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
-            int value1 = inputImg[row][col];
-            int value2 = inputImg[row][col-centerPoint->col];
-            int value3 = inputImg[row-centerPoint->row][col];
-            int value4 = inputImg[row-centerPoint->row][col-centerPoint->col];
-            if (!(value1||value2||value3||value4)) {
-                break;
-            }
-        }
-        
-        
-    }
-    
-    radius++;
-    return allWhite;
-}
+
 
 /**
  *flood_fill algorithm, here use 6-neighbour connectivity analysis to avoid block

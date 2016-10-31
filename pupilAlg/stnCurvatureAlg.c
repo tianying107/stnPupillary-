@@ -34,23 +34,25 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     int **binearImg=(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
     imageThreshold(interImg, nrows, ncols, (double)0.16, binearImg);
     
-    
-    
-    /*Largest area blob*/
-    int **labelImg =(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
-    int maxLabel = connectivityLabel(binearImg, nrows, ncols, labelImg);
-    filterBlobWithLabel(labelImg, nrows, ncols, maxLabel);
-    
     /*Median filter the result*/
-    stnMedianFilter(labelImg, nrows, ncols, 21, 21);
+    stnMedianFilter(binearImg, nrows, ncols, 21, 21);
     
     /*find the blob central*/
     stnPoint centerPoint;
-    stnFindCentral(labelImg, nrows, ncols, &centerPoint);
+    stnFindCentral(binearImg, nrows, ncols, &centerPoint);
+    printf("center\n");
+    //    bool findGrowthCircle = growthCircle(&centerPoint, binearImg, nrows, ncols);    /*Largest area blob with growth circle*/
+//
+//    if (findGrowthCircle) {
+//         printf("Find\n");
+//    }
+   
+    
+    
     
     /*left point and right point*/
     stnPoint leftPoint, rightPoint;
-    stnBoundaryPoint(labelImg, nrows, ncols, &centerPoint, &leftPoint, &rightPoint);
+    stnBoundaryPoint(binearImg, nrows, ncols, &centerPoint, &leftPoint, &rightPoint);
 //    printf("left point at row:%d col:%d\n",leftPoint.row, leftPoint.col);
 //    printf("right point at row:%d col:%d\n",rightPoint.row, rightPoint.col);
     
@@ -59,8 +61,8 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     initStnArray(&directionArray, 1);
     initStnArray(&contourMapRow, 1);
     initStnArray(&contourMapCol, 1);
-    stnContourBound(labelImg, nrows, ncols, &leftPoint,&directionArray,&contourMapRow,&contourMapCol);
-    
+    stnContourBound(binearImg, nrows, ncols, &leftPoint,&directionArray,&contourMapRow,&contourMapCol);
+    printf("contour\n");
     /*Curvature*/
     double *curvature = stnCurvature(&directionArray, 15);
     
@@ -76,17 +78,17 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     stnSafePoints(&contourMapRow, &contourMapCol, &peaks, &rightPoint, &safeRows, &safeCols);
     
     
-    /*******Ellipse*******/
-    /*ellipse fitting*/
-    int ellipseParameters[5];
-    stnEllipseFitting(&safeRows, &safeCols, &centerPoint,ellipseParameters);
-    int ellipse[3];
-    ellipse[0]=ellipseParameters[0];ellipse[1]=ellipseParameters[1];ellipse[2]=ellipseParameters[4];
-    /*ellipse points*/
-    stnArray ellipseRows, ellipseCols;
-    initStnArray(&ellipseCols, 1);
-    initStnArray(&ellipseRows, 1);
-    stnCirclePoints(&ellipseRows, &ellipseCols, ellipse);
+//    /*******Ellipse*******/
+//    /*ellipse fitting*/
+//    int ellipseParameters[5];
+//    stnEllipseFitting(&safeRows, &safeCols, &centerPoint,ellipseParameters);
+//    int ellipse[3];
+//    ellipse[0]=ellipseParameters[0];ellipse[1]=ellipseParameters[1];ellipse[2]=ellipseParameters[4];
+//    /*ellipse points*/
+//    stnArray ellipseRows, ellipseCols;
+//    initStnArray(&ellipseCols, 1);
+//    initStnArray(&ellipseRows, 1);
+//    stnCirclePoints(&ellipseRows, &ellipseCols, ellipse);
     
     /*******Circle*******/
     /*circle fitting*/
@@ -104,9 +106,9 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     /*draw the circle*/
     double redColor[3] = {1,0,0};
-    double blueColor[3] = {0,0,1};
+//    double blueColor[3] = {0,0,1};
     stnDrawColorPoints(&circleRows, &circleCols, outputppm, nrows, ncols, redColor);
-    stnDrawColorPoints(&ellipseRows, &ellipseCols, outputppm, nrows, ncols, blueColor);
+//    stnDrawColorPoints(&ellipseRows, &ellipseCols, outputppm, nrows, ncols, blueColor);
     stnDrawPoints(&circleRows, &circleCols, inputImg, nrows, ncols, outputImg);
 
     //release memory
