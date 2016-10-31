@@ -43,6 +43,8 @@ int main(int argc, const char * argv[]) {
         /* READ HEADER */
         if(read_pgm_hdr(fpx, &nrows, &ncols) < 0)
             error("not a PGM image or bpp > 8");
+        
+        
         /* ALLOCATE ARRAYS */
         x = (unsigned char **)matrix(nrows, ncols, 0, 0, sizeof(char));
         y = (unsigned char **)matrix(nrows, 3*ncols, 0, 0, sizeof(char));
@@ -65,10 +67,8 @@ int main(int argc, const char * argv[]) {
         
         imageSplit(x, nrows, ncols/2, img1, img2);
         
-        
         stnCurvaturePro(img1, nrows, ncols/2, out1, ppm1);
         stnCurvaturePro(img2, nrows, ncols/2, out2, ppm2);
-
         imgCombineDouble2Char(ppm1, ppm2, nrows, 3*ncols/2, y);
 //        imgCombineDouble2Char(out1, out2, nrows, ncols/2, y);
         

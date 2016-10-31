@@ -34,6 +34,8 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     int **binearImg=(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
     imageThreshold(interImg, nrows, ncols, (double)0.16, binearImg);
     
+    
+    
     /*Largest area blob*/
     int **labelImg =(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
     int maxLabel = connectivityLabel(binearImg, nrows, ncols, labelImg);
