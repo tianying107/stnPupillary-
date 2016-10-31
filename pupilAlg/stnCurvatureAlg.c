@@ -41,11 +41,11 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     stnPoint centerPoint;
     stnFindCentral(binearImg, nrows, ncols, &centerPoint);
     printf("center\n");
-    //    bool findGrowthCircle = growthCircle(&centerPoint, binearImg, nrows, ncols);    /*Largest area blob with growth circle*/
+    bool findGrowthCircle = growthCircle(&centerPoint, binearImg, nrows, ncols);    /*Largest area blob with growth circle*/
 //
-//    if (findGrowthCircle) {
-//         printf("Find\n");
-//    }
+    if (findGrowthCircle) {
+         printf("Find\n");
+    }
    
     
     
@@ -55,7 +55,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     stnBoundaryPoint(binearImg, nrows, ncols, &centerPoint, &leftPoint, &rightPoint);
 //    printf("left point at row:%d col:%d\n",leftPoint.row, leftPoint.col);
 //    printf("right point at row:%d col:%d\n",rightPoint.row, rightPoint.col);
-    
+    printf("%d,%d,%d,%d\n",leftPoint.row,leftPoint.col,rightPoint.row,rightPoint.col);
     /*contour*/
     stnArray directionArray,contourMapRow,contourMapCol;
     initStnArray(&directionArray, 1);

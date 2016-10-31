@@ -98,7 +98,7 @@ bool growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols){
     bool allWhite = false;
     int radius=0;
     int i,j,count;
-    
+
     for (radius=0; radius<min(min(centerPoint->col, ncols-centerPoint->col), min(centerPoint->row, nrows-centerPoint->row)); radius++) {
         count = 0;
         for (i=0; i<500*PI; i++) {
@@ -108,23 +108,21 @@ bool growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols){
             int value2 = inputImg[row][col-centerPoint->col];
             int value3 = inputImg[row-centerPoint->row][col];
             int value4 = inputImg[row-centerPoint->row][col-centerPoint->col];
-            if (!(value1||value2||value3||value4)) {
-                break;
+            if (value1&&value2&&value3&&value4) {
+                count++;
             }
-            else count++;
+            else break;
         }
-        if (count==500) {
+        if (count>=1500) {
             allWhite = true;
             break;
         }
     }
     
-    if (allWhite) {
-        for (i=0; i<nrows; i++) {
-            for (j=0; j<ncols; j++) {
-                if ((i*i+j*j)>radius*radius) {
-                    inputImg[i][j] = 0;
-                }
+    for (i=0; i<nrows; i++) {
+        for (j=0; j<ncols; j++) {
+            if ((pow(i-centerPoint->row, 2)+pow(j-centerPoint->col, 2))>radius*radius) {
+                inputImg[i][j] = 1;
             }
         }
     }
