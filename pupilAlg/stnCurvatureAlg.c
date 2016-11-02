@@ -10,7 +10,7 @@
 
 #include "stnCurvatureAlg.h"
 #include "stnImgOperaters.h"
-#include "functions.h"
+
 extern void imageHistogramEqualization(unsigned char **, int , int , int , int , double **);
 extern void imageThreshold(double **, int , int , double, int **);
 extern void **matrix(int, int, int, int, int);
@@ -18,7 +18,7 @@ extern void error(const char *);
 extern void imgInt2Char(int **, int , int , unsigned char **);
 extern int connectivityLabel(int **, int , int , int **);
 
-void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **outputImg, double **outputppm){
+void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **outputImg, double **outputppm, int allParameters[7]){
 
     int i,j;
     unsigned char **y;
@@ -37,22 +37,25 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     /*Median filter the result*/
     stnMedianFilter(binearImg, nrows, ncols, 21, 21);
     
+    /*stnTricky clear*/
+    for (i=0; i<nrows; i++) {
+        for (j=0; j<100; j++) {
+            binearImg[i][j]=1; 
+        }
+    }
+    
     /*find the blob central*/
     stnPoint centerPoint;
     stnFindCentral(binearImg, nrows, ncols, &centerPoint);
     
-//    /*Largest area blob*/
-//    int **labelImg =(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
-//    int maxLabel = connectivityLabel(binearImg, nrows, ncols, labelImg);
-//    filterBlobWithLabel(labelImg, nrows, ncols, maxLabel);
-//    
+    /*grow_circle*/
+    growthCircle(&centerPoint, binearImg, nrows, ncols);
+    stnFindCentral(binearImg, nrows, ncols, &centerPoint);
     
-    
+
     /*left point and right point*/
     stnPoint leftPoint, rightPoint;
     stnBoundaryPoint(binearImg, nrows, ncols, &centerPoint, &leftPoint, &rightPoint);
-//    printf("left point at row:%d col:%d\n",leftPoint.row, leftPoint.col);
-//    printf("right point at row:%d col:%d\n",rightPoint.row, rightPoint.col);
     
     /*contour*/
     stnArray directionArray,contourMapRow,contourMapCol;
@@ -86,7 +89,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     stnArray ellipseRows, ellipseCols;
     initStnArray(&ellipseCols, 1);
     initStnArray(&ellipseRows, 1);
-    stnCirclePoints(&ellipseRows, &ellipseCols, ellipse);
+    
     
     /*******Circle*******/
     /*circle fitting*/
@@ -96,11 +99,31 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     stnArray circleRows, circleCols;
     initStnArray(&circleCols, 1);
     initStnArray(&circleRows, 1);
+    
+    
+    /**********center point valid check*********/
+    if (pow(ellipse[0]-parameters[0], 2)+pow(ellipse[1]-parameters[1], 2)>min(pow(ellipse[2],2), pow(parameters[2],2))) {
+        ellipseParameters[1]=0;
+        ellipseParameters[0]=0;
+        ellipseParameters[2]=0;
+        ellipseParameters[3]=0;
+        parameters[1]=0;
+        parameters[0]=0;
+        parameters[2]=0;
+    }
+    
+    /*******get circle points**********/
+    stnCirclePoints(&ellipseRows, &ellipseCols, ellipse);
     stnCirclePoints(&circleRows, &circleCols, parameters);
     
     
+    
     /*convert grayscale to rgb using equalized image*/
+    if (!(int)safeRows.used) {
+        imgInt2Double(binearImg, nrows, ncols, interImg);
+    }
     stnGray2RGB(interImg, nrows, ncols, outputppm);
+    
     
     /*draw the circle*/
     double redColor[3] = {1,0,0};
@@ -118,15 +141,13 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     freeStnArray(&safeCols);
     freeStnArray(&circleRows);
     freeStnArray(&circleCols);
+
     
-//    imgDouble2Char(outputImg, nrows, ncols, y);
-////    imgInt2Char(outputImg, nrows, ncols, y);
-//        /* WRITE THE IMAGE */
-//        fprintf(fpy, "P5\n%d %d\n255\n", ncols, nrows);
-//        for(i = 0; i < nrows; i++)
-//            if(fwrite(&y[i][0], sizeof(char), ncols, fpy) != ncols)
-//                error("can't write the image");
-//    
-//        /* CLOSE FILE & QUIT */
-//        fclose(fpy);
+    allParameters[0]=ellipseParameters[1];
+    allParameters[1]=ellipseParameters[0];
+    allParameters[2]=ellipseParameters[2];
+    allParameters[3]=ellipseParameters[3];
+    allParameters[4]=parameters[1];
+    allParameters[5]=parameters[0];
+    allParameters[6]=parameters[2];
 }

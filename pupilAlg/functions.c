@@ -293,6 +293,13 @@ void imgInt2Char(int **intImage, int nrows, int ncols, unsigned char **charImage
         }
     }
 }
+void imgInt2Double(int **intImage, int nrows, int ncols, double **doubleImage){
+    for (int i = 0; i<nrows; i++) {
+        for (int j = 0; j<ncols; j++) {
+            doubleImage[i][j] = intImage[i][j];
+        }
+    }
+}
 
 /*Dynamic grow array*/
 

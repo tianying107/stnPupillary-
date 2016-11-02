@@ -37,4 +37,6 @@ void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, int parameters[3]
 void stnDrawPoints(stnArray *pointRows, stnArray *pointCols, unsigned char **inputImg, int nrows, int ncols, double **outputImg);
 void stnDrawColorPoints(stnArray *pointRows, stnArray *pointCols, double **inputImg, int nrows, int ncols, double color[3]);
 void stnGray2RGB(double **inputImg, int nrows, int ncols, double **outputImg);
+
+void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols);
 #endif /* stnImgOperaters_h */

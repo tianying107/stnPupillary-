@@ -23,13 +23,15 @@ extern void converInd(unsigned char **, int, int, double **);
 extern void imageSplit(unsigned char **, int , int , unsigned char **, unsigned char **);
 extern void imgInt2Char(int **, int , int , unsigned char **);
 extern void imgDouble2Char(double **, int , int , unsigned char **);
+
 int main(int argc, const char * argv[]) {
-    FILE *fpx, *fpy;
-    int nrows, ncols, i;//, j, k1, k2;
+    FILE *fpx, *fpy, *fParameter;
+    int nrows, ncols, i;
     unsigned char **x, **y,**img1,**img2;
     double **doubleImage, **px, **py, **out1, **out2, **ppm1, **ppm2;
     /* OPEN FILES */
-    for (int index=37; index<200; index++) {
+    fParameter = fopen("/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/output/parameters.txt", "w");
+    for (int index=1; index<354; index++) {
 
         
         char name[] = "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/frame_0001_image.pgm";
@@ -67,10 +69,16 @@ int main(int argc, const char * argv[]) {
         
         imageSplit(x, nrows, ncols/2, img1, img2);
         
-        stnCurvaturePro(img1, nrows, ncols/2, out1, ppm1);
-        stnCurvaturePro(img2, nrows, ncols/2, out2, ppm2);
+        int paraLeft[7],paraRight[7];
+        stnCurvaturePro(img1, nrows, ncols/2, out1, ppm1, paraLeft);
+        stnCurvaturePro(img2, nrows, ncols/2, out2, ppm2, paraRight);
+        
+        
         imgCombineDouble2Char(ppm1, ppm2, nrows, 3*ncols/2, y);
 //        imgCombineDouble2Char(out1, out2, nrows, ncols/2, y);
+
+        
+        
         
         /* WRITE THE IMAGE */
         fprintf(fpy, "P6\n%d %d\n255\n", ncols, nrows);
@@ -84,7 +92,9 @@ int main(int argc, const char * argv[]) {
 //                error("can't write the image");
         
         /* CLOSE FILE & QUIT */
-        fclose(fpy);
+        
+        fprintf(fParameter, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t\n", paraRight[0],paraRight[1],paraRight[2],paraRight[3],paraRight[4],paraRight[5],paraRight[6],paraLeft[0],paraLeft[1],paraLeft[2],paraLeft[3],paraLeft[4],paraLeft[5],paraLeft[6]);
+        
         printf("processed: %d\n",index);
 
         freeStnMatrix((void**)x);
@@ -98,6 +108,10 @@ int main(int argc, const char * argv[]) {
         freeStnMatrix((void**)ppm2);
         freeStnMatrix((void**)px);
         freeStnMatrix((void**)py);
+        
+        
     }
+    
+    fclose(fParameter);
     return 0;
 }

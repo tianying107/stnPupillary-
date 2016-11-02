@@ -20,6 +20,7 @@ void trans(double num[250][250], double fac[250][250], int r, double inv[r][r]);
 void converInd(unsigned char **x, int nrows, int ncols, double **intImage);
 void imgDouble2Char(double **doubleImage, int nrows, int ncols, unsigned char **charImage);
 void imgCombineDouble2Char(double **doubleImage1, double **doubleImage2, int nrows, int ncols, unsigned char **charImage);
+void imgInt2Double(int **intImage, int nrows, int ncols, double **doubleImage);
 /**
  *stn Dynamic array struct and relate functions
  */
@@ -40,6 +41,11 @@ void freeStnArray(stnArray *a);
 ({ __typeof__ (a) _a = (a); \
 __typeof__ (b) _b = (b); \
 _a > _b ? _a : _b; })
+
+#define min(a,b) \
+({ __typeof__ (a) _a = (a); \
+__typeof__ (b) _b = (b); \
+_a < _b ? _a : _b; })
 
 double sum(double x[], int arr_count);
 double stnInterp2(int nrows, int ncols, int intMatrix[nrows][ncols], double row, double col);

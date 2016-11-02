@@ -89,36 +89,36 @@ void imageThreshold(double **inputImg, int nrows, int ncols, double threshold, i
     }
 }
 
-/**
- *Growth Circle algorithm, an algorithm to label the largest blob
- *
- */
-bool growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols){
-    bool allWhite = false;
-    int radius=0;
-    int i;
-    for (radius=0; radius<ncols; radius++) {
-        
-        for (i=0; i<500*PI; i++) {
-            int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
-            int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
-            int value1 = inputImg[row][col];
-            int value2 = inputImg[row][col-centerPoint->col];
-            int value3 = inputImg[row-centerPoint->row][col];
-            int value4 = inputImg[row-centerPoint->row][col-centerPoint->col];
-            if (!(value1||value2||value3||value4)) {
-                break;
-            }
-            
-            
-        }
-        
-        
-    }
-    
-    radius++;
-    return allWhite;
-}
+///**
+// *Growth Circle algorithm, an algorithm to label the largest blob
+// *
+// */
+//bool growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols){
+//    bool allWhite = false;
+//    int radius=0;
+//    int i;
+//    for (radius=0; radius<ncols; radius++) {
+//        
+//        for (i=0; i<500*PI; i++) {
+//            int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
+//            int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
+//            int value1 = inputImg[row][col];
+//            int value2 = inputImg[row][col-centerPoint->col];
+//            int value3 = inputImg[row-centerPoint->row][col];
+//            int value4 = inputImg[row-centerPoint->row][col-centerPoint->col];
+//            if (!(value1||value2||value3||value4)) {
+//                break;
+//            }
+//            
+//            
+//        }
+//        
+//        
+//    }
+//    
+//    radius++;
+//    return allWhite;
+//}
 
 /**
  *Version 1.0
@@ -167,6 +167,46 @@ int connectivityLabel(int **inputImg, int nrows, int ncols, int **labeledImg){
     return maxLabel;
     
 }
+
+/**
+ *Growth Circle algorithm, an algorithm to label the largest blob
+ *
+ */
+void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols){
+    bool allWhite = false;
+    int radius=0;
+    int i,j,count;
+    
+    for (radius=50; radius<min(min(centerPoint->col, ncols-centerPoint->col), min(centerPoint->row, nrows-centerPoint->row)); radius++) {
+        count = 0;
+        for (i=0; i<500*PI; i++) {
+            int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
+            int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
+            int value1 = inputImg[row][col];
+            int value2 = inputImg[row][-col+2*centerPoint->col];
+            int value3 = inputImg[-row+2*centerPoint->row][col];
+            int value4 = inputImg[-row+2*centerPoint->row][-col+2*centerPoint->col];
+            if (value1&&value2&&value3&&value4) {
+                count++;
+            }
+            else break;
+        }
+        
+        if (count>=1500) {
+            allWhite = true;
+            break;
+        }
+    }
+    
+    for (i=0; i<nrows; i++) {
+        for (j=0; j<ncols; j++) {
+            if ((pow(i-centerPoint->row, 2)+pow(j-centerPoint->col, 2))>radius*radius) {
+                inputImg[i][j] = 1;
+            }
+        }
+    }
+}
+
 
 /**
  *flood_fill algorithm, here use 6-neighbour connectivity analysis to avoid block
@@ -353,10 +393,11 @@ double *stnCurvature(stnArray *directionArray, int windowSize){
                             {2,3,4,-3,-2,-1,0,1},
                             {1,2,3,4,-3,-2,-1,0}};
     int length =(int)directionArray->used;
-
+    
     
 //    double curvature[directionArray->used];
     double *curvature = (double *)malloc(length*sizeof(double));
+    if (!length) return curvature;
     
     stnArray newDirection;
     initStnArray(&newDirection, 1);
@@ -377,7 +418,8 @@ double *stnCurvature(stnArray *directionArray, int windowSize){
         for (int j=i; j<i+windowSize; j++) {
             alp2 += newDirection.array[j];
         }
-        curvature[i-windowSize+1]=stnInterp2(8, 8, circleMap, ((double)alp1)/windowSize, ((double)alp2)/windowSize);
+//        printf("%f, %f\n",((double)alp1)/windowSize,((double)alp2)/windowSize);
+        curvature[i-windowSize+1]=stnInterp2(8, 8, circleMap, min(((double)alp1)/windowSize, 6) , min(((double)alp2)/windowSize, 6));
     }
     return curvature;
 }
