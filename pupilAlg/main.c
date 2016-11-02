@@ -29,7 +29,7 @@ int main(int argc, const char * argv[]) {
     unsigned char **x, **y,**img1,**img2;
     double **doubleImage, **px, **py, **out1, **out2, **ppm1, **ppm2;
     /* OPEN FILES */
-    for (int index=1; index<2; index++) {
+    for (int index=37; index<200; index++) {
 
         
         char name[] = "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/frame_0001_image.pgm";
@@ -87,7 +87,17 @@ int main(int argc, const char * argv[]) {
         fclose(fpy);
         printf("processed: %d\n",index);
 
-
+        freeStnMatrix((void**)x);
+        freeStnMatrix((void**)y);
+        freeStnMatrix((void**)doubleImage);
+        freeStnMatrix((void**)img1);
+        freeStnMatrix((void**)img2);
+        freeStnMatrix((void**)out1);
+        freeStnMatrix((void**)out2);
+        freeStnMatrix((void**)ppm1);
+        freeStnMatrix((void**)ppm2);
+        freeStnMatrix((void**)px);
+        freeStnMatrix((void**)py);
     }
     return 0;
 }

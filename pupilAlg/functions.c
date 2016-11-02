@@ -104,6 +104,9 @@ void **matrix(int nrows, int ncols, int first_row_coord,
     return(p);
 }
 
+void freeStnMatrix(void** matrix){
+    free(matrix);
+}
 /* REFLECT AN IMAGE ACROSS ITS BORDERS */
 
 /* The parameter "amount" tells the number of rows or columns to be */

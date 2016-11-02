@@ -34,23 +34,23 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     int **binearImg=(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
     imageThreshold(interImg, nrows, ncols, (double)0.16, binearImg);
     
-    
-    
-    /*Largest area blob*/
-    int **labelImg =(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
-    int maxLabel = connectivityLabel(binearImg, nrows, ncols, labelImg);
-    filterBlobWithLabel(labelImg, nrows, ncols, maxLabel);
-    
     /*Median filter the result*/
-    stnMedianFilter(labelImg, nrows, ncols, 21, 21);
+    stnMedianFilter(binearImg, nrows, ncols, 21, 21);
     
     /*find the blob central*/
     stnPoint centerPoint;
-    stnFindCentral(labelImg, nrows, ncols, &centerPoint);
+    stnFindCentral(binearImg, nrows, ncols, &centerPoint);
+    
+//    /*Largest area blob*/
+//    int **labelImg =(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
+//    int maxLabel = connectivityLabel(binearImg, nrows, ncols, labelImg);
+//    filterBlobWithLabel(labelImg, nrows, ncols, maxLabel);
+//    
+    
     
     /*left point and right point*/
     stnPoint leftPoint, rightPoint;
-    stnBoundaryPoint(labelImg, nrows, ncols, &centerPoint, &leftPoint, &rightPoint);
+    stnBoundaryPoint(binearImg, nrows, ncols, &centerPoint, &leftPoint, &rightPoint);
 //    printf("left point at row:%d col:%d\n",leftPoint.row, leftPoint.col);
 //    printf("right point at row:%d col:%d\n",rightPoint.row, rightPoint.col);
     
@@ -59,7 +59,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     initStnArray(&directionArray, 1);
     initStnArray(&contourMapRow, 1);
     initStnArray(&contourMapCol, 1);
-    stnContourBound(labelImg, nrows, ncols, &leftPoint,&directionArray,&contourMapRow,&contourMapCol);
+    stnContourBound(binearImg, nrows, ncols, &leftPoint,&directionArray,&contourMapRow,&contourMapCol);
     
     /*Curvature*/
     double *curvature = stnCurvature(&directionArray, 15);

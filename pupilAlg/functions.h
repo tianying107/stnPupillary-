@@ -12,6 +12,7 @@
 #define functions_h
 
 #include <stdio.h>
+void freeStnMatrix(void** matrix);
 void inverseMat(int points, double Amat[points][points]);
 double detrminant(double a[250][250], int k);
 void cofactors(double num[250][250], int f, double inv[f][f]);
