@@ -23,7 +23,9 @@ typedef struct {
     int row;
     int col;
 } stnPoint;
-
+double *movingWindowSmooth(double *input, int windowSize, int inputSize);
+double *imageHistogram(unsigned char **inputImg, int nrows, int ncols);
+void dynamicHistogramEqualization(unsigned char **inputImg, int nrows, int ncols, int lower, int upper, int radius, double **outputImg);
 void filterBlobWithLabel(int **labelImage, int nrows, int ncols, int label);
 void stnMedianFilter(int **inputImg, int nrows, int ncols, int filterWidth, int filterHeight);
 void stnFindCentral(int **inputImg, int nrows, int ncols, stnPoint *centerPoint);
@@ -31,12 +33,13 @@ void stnBoundaryPoint(int **inputImg, int nrows, int ncols, stnPoint *centerPoin
 void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, stnArray *directionArray, stnArray *contourMapRow, stnArray *contourMapCol);
 double *stnCurvature(stnArray *directionArray, int windowSize);
 void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *breakPoints, stnPoint *rightPoint, stnArray *safeRows, stnArray *safeCols);
-void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, int parameters[5]);
-void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, int parameters[3]);
-void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, int parameters[3]);
+void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, double parameters[5]);
+void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, double parameters[3]);
+void stnMLSCircleFitting(stnArray *pointRows, stnArray *pointCols, double parameters[3]);
+void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, double parameters[3]);
 void stnDrawPoints(stnArray *pointRows, stnArray *pointCols, unsigned char **inputImg, int nrows, int ncols, double **outputImg);
 void stnDrawColorPoints(stnArray *pointRows, stnArray *pointCols, double **inputImg, int nrows, int ncols, double color[3]);
 void stnGray2RGB(double **inputImg, int nrows, int ncols, double **outputImg);
 
-void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols);
+void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, int radius);
 #endif /* stnImgOperaters_h */

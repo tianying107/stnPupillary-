@@ -24,6 +24,43 @@ void imageSplit(unsigned char **combinedImg, int nrows, int newWidth, unsigned c
     }
 }
 
+double *movingWindowSmooth(double *input, int windowSize, int inputSize){
+    int i;
+    int startIndex = (windowSize-1)/2;
+    double *output = (double *)malloc(256*sizeof(double));
+    output[0] = input[0];
+    output[255] = input[255];
+    for (i=startIndex; i<inputSize-startIndex; i++) {
+        output[i] = (input[i-1]+input[i]+input[i+1])/(double)windowSize;
+//        printf("%d: %f , %d: %f , %d: %f, out:%f\n",i-1,input[i-1],i,input[i],i+1,input[i+1],output[i]);
+    }
+    return output;
+}
+
+double *imageHistogram(unsigned char **inputImg, int nrows, int ncols){
+    
+    //calculate the normalized histogram
+    int i, j;
+    double Num = 0;
+    double *histogram = (double *)malloc(256*sizeof(double));
+    for (i=0; i<256; i++) {
+        histogram[i]=0;
+    }
+    for (i=0; i<nrows; i++) {
+        for (j=0; j<ncols; j++) {
+            int va;
+            va=inputImg[i][j];
+            histogram[va] += 1;
+            Num += 1;
+        }
+    }
+    for (i=0; i<256; i++) {
+        histogram[i]=histogram[i]/Num;
+        
+    }
+//    printf("%f\n",histogram[0]);
+    return histogram;
+}
 void imageHistogramEqualization(unsigned char **inputImg, int nrows, int ncols, int lower, int upper, double **outputImg){
     int i, j;
     int Num = 0;
@@ -32,6 +69,7 @@ void imageHistogramEqualization(unsigned char **inputImg, int nrows, int ncols, 
     for (i=0; i<256; i++) {
         h[i]=0;
     }
+    //left half side
     for (i=0; i<nrows; i++) {
         for (j=0; j<ncols; j++) {
             int va;
@@ -66,13 +104,73 @@ void imageHistogramEqualization(unsigned char **inputImg, int nrows, int ncols, 
                 outputImg[i][j]=0;
             }
             else if (va>upper){
-                outputImg[i][j]=255;
+                outputImg[i][j]=upper;
             }
             else{
                 outputImg[i][j]=(H[va]-H[XL])/((double)Num-H[XL]);
             }
         }
     }
+}
+
+void dynamicHistogramEqualization(unsigned char **inputImg, int nrows, int ncols, int lower, int upper, int radius, double **outputImg){
+    int i, j,ii,jj;
+    int Num,XL,H[256];
+    double h[256];
+    
+    for (i=0; i<nrows; i++) {
+        for (j=0; j<ncols; j++) {
+            outputImg[i][j]=(double)inputImg[i][j];
+        }
+    }
+    
+    for (i=radius; i<nrows-radius; i++) {
+        for (j=radius; j<ncols-radius; j++) {
+            //calculate the hist
+            Num = 0;
+            for (ii=0; ii<256; ii++) {
+                h[ii]=0;
+            }
+            for (ii=i-radius; ii<i+radius; ii++) {
+                for (jj=j-radius; jj<j+radius; jj++) {
+                    int va;
+                    va=inputImg[ii][jj];
+                    if ((va>=lower)&&(va<=upper)) {
+                        h[va]+=1;
+                        Num+=1;
+                    }
+                }
+            }
+            
+            //calculate the smallest gray level
+            XL=0;
+            for (ii=lower; ii<upper+1; ii++) {
+                if (ii==lower) {
+                    H[ii]=h[ii];
+                }
+                else{
+                    H[ii]=H[ii-1]+h[ii];
+                }
+                if (H[ii]==0) {
+                    XL=ii;
+                }
+            }
+            //Map to new gray level
+            int va;
+            va=inputImg[i][j];
+            if (va<lower) {
+                outputImg[i][j]=0;
+            }
+            else if (va>upper){
+                outputImg[i][j]=255;
+            }
+            else{
+                outputImg[i][j]=(H[va]-H[XL])/((double)Num-H[XL]);
+            }
+
+        }
+    }
+
 }
 
 void imageThreshold(double **inputImg, int nrows, int ncols, double threshold, int **binearImg){
@@ -88,37 +186,6 @@ void imageThreshold(double **inputImg, int nrows, int ncols, double threshold, i
         }
     }
 }
-
-///**
-// *Growth Circle algorithm, an algorithm to label the largest blob
-// *
-// */
-//bool growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols){
-//    bool allWhite = false;
-//    int radius=0;
-//    int i;
-//    for (radius=0; radius<ncols; radius++) {
-//        
-//        for (i=0; i<500*PI; i++) {
-//            int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
-//            int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
-//            int value1 = inputImg[row][col];
-//            int value2 = inputImg[row][col-centerPoint->col];
-//            int value3 = inputImg[row-centerPoint->row][col];
-//            int value4 = inputImg[row-centerPoint->row][col-centerPoint->col];
-//            if (!(value1||value2||value3||value4)) {
-//                break;
-//            }
-//            
-//            
-//        }
-//        
-//        
-//    }
-//    
-//    radius++;
-//    return allWhite;
-//}
 
 /**
  *Version 1.0
@@ -170,31 +237,68 @@ int connectivityLabel(int **inputImg, int nrows, int ncols, int **labeledImg){
 
 /**
  *Growth Circle algorithm, an algorithm to label the largest blob
- *
+ *Version 1.1 
+ *NEW FEAUTRES: using previous radius result to guess the starting point
  */
-void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols){
+void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, int radius){
     bool allWhite = false;
-    int radius=0;
     int i,j,count;
-    
-    for (radius=50; radius<min(min(centerPoint->col, ncols-centerPoint->col), min(centerPoint->row, nrows-centerPoint->row)); radius++) {
-        count = 0;
-        for (i=0; i<500*PI; i++) {
-            int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
-            int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
-            int value1 = inputImg[row][col];
-            int value2 = inputImg[row][-col+2*centerPoint->col];
-            int value3 = inputImg[-row+2*centerPoint->row][col];
-            int value4 = inputImg[-row+2*centerPoint->row][-col+2*centerPoint->col];
-            if (value1&&value2&&value3&&value4) {
-                count++;
-            }
-            else break;
+    //test previous radius
+    count = 0;
+    for (i=0; i<500*PI; i++) {
+        //printf("r=%d\n",radius);
+        int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
+        int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
+        int value1 = inputImg[row][col];
+        int value2 = inputImg[row][-col+2*centerPoint->col];
+        int value3 = inputImg[-row+2*centerPoint->row][col];
+        int value4 = inputImg[-row+2*centerPoint->row][-col+2*centerPoint->col];
+        if (value1&&value2&&value3&&value4) {
+            count++;
         }
-        
-        if (count>=1500) {
-            allWhite = true;
-            break;
+        else break;
+    }
+    if (count>=1500) {
+        for (radius=radius; radius>0; radius--) {
+            count = 0;
+            for (i=0; i<500*PI; i++) {
+                int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
+                int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
+                int value1 = inputImg[row][col];
+                int value2 = inputImg[row][-col+2*centerPoint->col];
+                int value3 = inputImg[-row+2*centerPoint->row][col];
+                int value4 = inputImg[-row+2*centerPoint->row][-col+2*centerPoint->col];
+                if (value1&&value2&&value3&&value4) {
+                    count++;
+                }
+                else break;
+            }
+            
+            if (count>=1500) {
+                allWhite = true;
+                break;
+            }
+        }
+    }else{
+        for (radius=radius; radius<min(min(centerPoint->col, ncols-centerPoint->col), min(centerPoint->row, nrows-centerPoint->row)); radius++) {
+            count = 0;
+            for (i=0; i<500*PI; i++) {
+                int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
+                int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
+                int value1 = inputImg[row][col];
+                int value2 = inputImg[row][-col+2*centerPoint->col];
+                int value3 = inputImg[-row+2*centerPoint->row][col];
+                int value4 = inputImg[-row+2*centerPoint->row][-col+2*centerPoint->col];
+                if (value1&&value2&&value3&&value4) {
+                    count++;
+                }
+                else break;
+            }
+            
+            if (count>=1500) {
+                allWhite = true;
+                break;
+            }
         }
     }
     
@@ -206,6 +310,43 @@ void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols){
         }
     }
 }
+/*old version growth circle without guess
+void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, int radius){
+    bool allWhite = false;
+    int i,j,count;
+        for (radius=40; radius<min(min(centerPoint->col, ncols-centerPoint->col), min(centerPoint->row, nrows-centerPoint->row)); radius++) {
+            count = 0;
+            for (i=0; i<500*PI; i++) {
+                int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
+                int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
+                int value1 = inputImg[row][col];
+                int value2 = inputImg[row][-col+2*centerPoint->col];
+                int value3 = inputImg[-row+2*centerPoint->row][col];
+                int value4 = inputImg[-row+2*centerPoint->row][-col+2*centerPoint->col];
+                if (value1&&value2&&value3&&value4) {
+                    count++;
+                }
+                else break;
+            }
+            
+            if (count>=1500) {
+                allWhite = true;
+                break;
+            }
+        }
+    
+    for (i=0; i<nrows; i++) {
+        for (j=0; j<ncols; j++) {
+            if ((pow(i-centerPoint->row, 2)+pow(j-centerPoint->col, 2))>radius*radius) {
+                inputImg[i][j] = 1;
+            }
+        }
+    }
+}
+*/
+
+
+
 
 
 /**
@@ -227,6 +368,10 @@ void flood_fill(int x,int y,int label, int **labelImg, int nrows, int ncols){
     
 }
 
+
+
+
+
 /**
  *filterBlobWithLabel is a function can pick up the blob in a well labeled image using a specific label
  *labelImage is a well labeled image, with nrows rows and ncols column. It is both input and output.
@@ -243,6 +388,10 @@ void filterBlobWithLabel(int **labelImage, int nrows, int ncols, int label){
         }
     }
 }
+
+
+
+
 /**
  *stnMedianFilter is a 2-D median filter that only work on binary image
  */
@@ -266,6 +415,10 @@ void stnMedianFilter(int **inputImg, int nrows, int ncols, int filterWidth, int 
     }
     inputImg = filteredImg;
 }
+
+
+
+
 
 /**
  *stnFindCentral
@@ -295,7 +448,7 @@ void stnFindCentral(int **inputImg, int nrows, int ncols, stnPoint *centerPoint)
 void stnBoundaryPoint(int **inputImg, int nrows, int ncols, stnPoint *centerPoint, stnPoint *leftPoint, stnPoint *rightPoint){
     int x = centerPoint->col;
     int y = centerPoint->row;
-    int windowSize = 30;
+    int windowSize = nrows/10;//24;
     //any holes within the pupil blob were classified as a corneal relection if the hole width was less than this value
     //true point at here is black (i.e. the value of center point is 0)
     
@@ -320,7 +473,9 @@ void stnBoundaryPoint(int **inputImg, int nrows, int ncols, stnPoint *centerPoin
     for (int i=0; i<windowSize && x+i<ncols; i++) {
         sum += inputImg[y][x+i];
     }
-    while (sum<windowSize && x) {
+//    printf("x: %d\n",x);
+    while (sum<min(windowSize, ncols-x) && x<ncols) {
+//        printf("x: %d sum:%d window:%d\n",x,sum,min(windowSize, ncols-x));
         x++;
         sum=0;
         for (int i=0; i<windowSize && x+i<ncols; i++) {
@@ -329,6 +484,7 @@ void stnBoundaryPoint(int **inputImg, int nrows, int ncols, stnPoint *centerPoin
     }
     rightPoint->col = x-1;
     rightPoint->row = y;
+    
 }
 
 /**
@@ -421,6 +577,9 @@ double *stnCurvature(stnArray *directionArray, int windowSize){
 //        printf("%f, %f\n",((double)alp1)/windowSize,((double)alp2)/windowSize);
         curvature[i-windowSize+1]=stnInterp2(8, 8, circleMap, min(((double)alp1)/windowSize, 6) , min(((double)alp2)/windowSize, 6));
     }
+//    for (int i=0; i<length; i++) {
+//        printf("%f\n",curvature[i]);
+//    }
     return curvature;
 }
 
@@ -431,7 +590,7 @@ void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *break
     /*calculate left safe points upper and lower boundary index first*/
     int leftUpperIndex = breakPoints->array[0];
     int leftLowerIndex = breakPoints->array[(int)breakPoints->used - 1];
-    
+//    printf("0 - %d, %d - end\n",leftUpperIndex,leftLowerIndex);
     /*then find out right point index in contour*/
     int rightIndex = 0;
     for (int i = 0; i<(int)contourRows->used; i++) {
@@ -450,19 +609,26 @@ void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *break
             break;
         }
     }
-    
+//    printf("%d - %d\n",rightLowerIndex,rightUpperIndex);
     for (int i=0; i<(int)contourRows->used; i++) {
-        if (i<leftUpperIndex||i>leftLowerIndex||i>rightLowerIndex||i<rightUpperIndex) {
+        if (i<leftUpperIndex||i>leftLowerIndex||(i>rightLowerIndex&&i<rightUpperIndex)) {
+
             insertStnArray(safeRows, contourRows->array[i]);
             insertStnArray(safeCols, contourCols->array[i]);
         }
     }
+//    printf("right point: %d, %d\n",rightPoint->row, rightPoint->col);
+    if (rightIndex == 0) {
+        insertStnArray(safeRows, rightPoint->row);
+        insertStnArray(safeCols, rightPoint->col);
+    }
+    
 }
 
 /**
  *stnEllipseFitting
  */
-void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, int parameters[5]){
+void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, double parameters[5]){
     int i;
     int length = (int)pointRows->used;
     double D[6][length];
@@ -514,7 +680,7 @@ void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *cente
 /**
  *stnCircleFitting
  */
-void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, int parameters[3]){
+void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, double parameters[3]){
     int i;
     
     int length = (int)pointRows->used;
@@ -541,22 +707,88 @@ void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, int parameters[3
     double paraMatrix[3][1];
     stnMatrixMultiply(3, 1, length, pMatrix, rMatrix, paraMatrix);
 
-    double xhat = round(paraMatrix[0][0]/2);//col
-    double yhat = round(paraMatrix[1][0]/2);//row
+    double xhat = paraMatrix[0][0]/2;//col
+    double yhat = paraMatrix[1][0]/2;//row
     
     int radius = round(sqrt(pow(xhat, 2)+pow(yhat, 2)+paraMatrix[2][0]));
     int centerX = round(xhat);
     int centerY = round(yhat);
-    parameters[0]=centerY;
-    parameters[1]=centerX;
-    parameters[2]=radius;
+    parameters[0]=yhat;
+    parameters[1]=xhat;
+    parameters[2]=sqrt(pow(xhat, 2)+pow(yhat, 2)+paraMatrix[2][0]);
+    
+//    printf("regular cx: %d, cy: %d, r: %d\n",centerX,centerY,radius);
     
 }
-
+/**
+ *stnMLSCircleFitting
+ *Modified Least Squares Method
+ */
+void stnMLSCircleFitting(stnArray *pointRows, stnArray *pointCols, double parameters[3]){
+    int i;
+    double length = (double)pointRows->used;//    n
+    double A,B,C,D,E;
+    
+    /*******for loop version*******/
+    double sx=0,sx2=0,sy=0,sy2=0,sxy=0,sxy2=0,sx2y=0,sx3=0,sy3=0;
+    for (i=0; i<(int)length; i++) {
+        double x=(double)pointCols->array[i];
+        double y=(double)pointRows->array[i];
+        
+        sx += x;
+        sy += y;
+        sx2 += pow(x, 2);
+        sy2 += pow(y, 2);
+        sxy += x*y;
+        sxy2 += x*y*y;
+        sx2y += x*x*y;
+        sx3 += pow(x, 3);
+        sy3 += pow(y, 3);
+    }
+    A = length*sx2 - pow(sx, 2);
+    B = length*sxy - sx*sy;
+    C = length*sy2 - pow(sy, 2);
+    D = 0.5*(length*sxy2-sx*sy2+length*sx3-sx*sx2);
+    E = 0.5*(length*sx2y-sy*sx2+length*sy3-sy*sy2);
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /*
+    
+    A = length*sumSquaredStnArray(pointCols)-pow(sumStnArray(pointCols), 2);
+    B = length*sumProductStnArray(pointCols, 1, pointRows, 1)-sumStnArray(pointRows)*sumStnArray(pointCols);
+    C = length*sumSquaredStnArray(pointRows)-pow(sumStnArray(pointRows), 2);
+    D = 0.5*(length*sumProductStnArray(pointCols, 1, pointRows, 2) - sumStnArray(pointCols)*sumSquaredStnArray(pointRows)+length*sumPoweredStnArray(pointCols, 3)-sumSquaredStnArray(pointCols)*sumSquaredStnArray(pointCols));
+    E = 0.5*(length*sumProductStnArray(pointRows, 1, pointCols, 2) - sumStnArray(pointRows)*sumSquaredStnArray(pointCols)+length*sumPoweredStnArray(pointRows, 3)-sumSquaredStnArray(pointRows)*sumSquaredStnArray(pointRows));
+    */
+    double centerCol = (D*C-B*E)/(A*C-B*B);
+    double centerRow = (A*E-B*D)/(A*C-B*B);
+    centerRow=centerRow;
+    centerCol=centerCol;
+    double radius = 0;
+    for (i=0; i<length; i++) {
+        radius += sqrt(pow((double)pointCols->array[i]-centerCol, 2)+pow((double)pointRows->array[i]-centerRow, 2));
+    }
+    radius = radius/((double)length);
+    
+    int radiusInt = round(radius);
+    int centerX = round(centerCol);
+    int centerY = round(centerRow);
+    parameters[0]=centerY;
+    parameters[1]=centerX;
+    parameters[2]=radiusInt;
+//    printf("MLS     cx:%d, cy:%d, r:%d\n",centerX,centerY,radiusInt);
+}
 /**
  *stnCirclePoints
  */
-void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, int parameters[3]){
+void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, double parameters[3]){
     int i;
     for (i=0; i<1000*2*PI; i++) {
         int col = parameters[2]*cos(((double)i)/1000) + parameters[1];

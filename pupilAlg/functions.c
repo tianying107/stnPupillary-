@@ -300,6 +300,13 @@ void imgInt2Double(int **intImage, int nrows, int ncols, double **doubleImage){
         }
     }
 }
+void imgChar2Double(unsigned char **intImage, int nrows, int ncols, double **doubleImage){
+    for (int i = 0; i<nrows; i++) {
+        for (int j = 0; j<ncols; j++) {
+            doubleImage[i][j] = ((double)intImage[i][j])/255;
+        }
+    }
+}
 
 /*Dynamic grow array*/
 
@@ -322,6 +329,45 @@ void freeStnArray(stnArray *a) {
     free(a->array);
     a->array = NULL;
     a->used = a->size = 0;
+}
+
+double sumStnArray(stnArray *a){
+    double my_sum = 0;
+    
+    for (int i = 0; i < (int)a->used; i++){
+        my_sum += (double)a->array[i];
+    }
+    return my_sum;
+}
+double sumToStnArray(stnArray *a, int sumToIndex){
+    double my_sum = 0;
+    
+    for (int i = 0; i < min(sumToIndex, (int)a->used); i++){
+        my_sum += (double)a->array[i];
+    }
+    return my_sum;
+}
+double sumSquaredStnArray(stnArray *a){
+    double my_sum = sumPoweredStnArray(a, 2);
+    return my_sum;
+}
+double sumPoweredStnArray(stnArray *a, double power_a){
+    double my_sum = 0;
+//    printf("a0: %d\n",a->array[0]);
+    for (int i = 0; i < (int)a->used; i++){
+        my_sum += pow((double)a->array[i], power_a);
+    }
+    return my_sum;
+}
+double sumProductStnArray(stnArray *a, double power_a, stnArray *b, double power_b){
+    if ((int)a->used != (int)b->used)
+        error("stnArray must be the same size!");
+//    printf("a0: %d, b0: %d\n",a->array[0],b->array[0]);
+    double my_sum = 0;
+    for (int i = 0; i < (int)a->used; i++){
+        my_sum += pow((double)a->array[i], power_a) * pow((double)b->array[i], power_b);
+    }
+    return my_sum;
 }
 
 double sum(double x[], int arr_count){
@@ -363,33 +409,42 @@ void detect_peak(
                 int             data_count, /* row count of data */
                 stnArray*       peaks, /* emission peaks will be put here */
                 double          delta, /* delta used for distinguishing peaks */
-                double          threshold   /*threshold used for filter peaks below the value*/
+                double          threshold,   /*threshold used for filter peaks below the value*/
+                int             deltaMode        /*0:use delta on the right side of peak; 1:use delta on both sides of peak*/
 )
 {
     int     i;
-    double  mx;
+    double  mx,mi;
     int     mx_pos = 0;
     bool    positionUpdate=false;
 
     mx = threshold;
+    mi = threshold;
+    
+//    for(i=0;i<data_count;i++){
+//        printf("%f\n",data[i]);
+//    }
     
     for(i = 0; i < data_count; i++)
     {
-        if(data[i] > mx)
+        if(fabs(data[i]) > mx &&!(deltaMode && (fabs(data[i]) > mi+delta)))
         {
             mx_pos = i;
-            mx = data[i];
+            mx = fabs(data[i]);
             positionUpdate = true;
         }
-        
-        if(data[i] < mx - delta) {
+//        if (i>17 && i<33){
+//            printf("mx:%f\n",mx);
+//        }
+        if(data[i] < mx - delta) {//delete abs of data
             if(positionUpdate){
+//                printf("peak:%d\n",i);
                 insertStnArray(peaks, mx_pos);
                 positionUpdate = false;
             }
-            
-            mx = max(data[i],threshold);
+            mx = max(fabs(data[i]),threshold);
         }
+        
     }
     
 }
@@ -626,7 +681,10 @@ void stnMatrixInverse(int nrows, double squareMatrix[nrows][nrows]){
                 }
             }
         }
+        freeStnMatrix((void**)bMatrix);
+        freeStnMatrix((void**)squarePoint);
     }
+    
     
 }
 

@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h> /* needed for exit() */
 #include <math.h>
+#include <time.h>
 #include "functions.h"
 #include "stnCurvatureAlg.h"
 #include "stnImgOperaters.h"
@@ -29,13 +30,14 @@ int main(int argc, const char * argv[]) {
     int nrows, ncols, i;
     unsigned char **x, **y,**img1,**img2;
     double **doubleImage, **px, **py, **out1, **out2, **ppm1, **ppm2;
+    double paraLeft[7]={0,0,0,0,0,0,0},paraRight[7]={0,0,0,0,0,0,0};
     /* OPEN FILES */
     fParameter = fopen("/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/output/parameters.txt", "w");
-    for (int index=1; index<354; index++) {
+    for (int index=300; index<310; index++) {
 
         
-        char name[] = "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/frame_0001_image.pgm";
-        snprintf(name, sizeof(name), "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/frame_%.4d_image.pgm", index);
+        char name[] = "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/dataset1/frame_0001_image.pgm";
+        snprintf(name, sizeof(name), "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/dataset1/frame_%.4d_image.pgm", index);
 //        printf("%s\n",name);
         fpx = fopen(name,"r");
         
@@ -67,16 +69,19 @@ int main(int argc, const char * argv[]) {
                 error("can't read the image");
         
         
+//        clock_t begin = clock();
+        
         imageSplit(x, nrows, ncols/2, img1, img2);
         
-        int paraLeft[7],paraRight[7];
-        stnCurvaturePro(img1, nrows, ncols/2, out1, ppm1, paraLeft);
-        stnCurvaturePro(img2, nrows, ncols/2, out2, ppm2, paraRight);
-        
+        stnCurvaturePro(img1, nrows, ncols/2, out1, ppm1, paraLeft,1);
+        stnCurvaturePro(img2, nrows, ncols/2, out2, ppm2, paraRight,2);
+//        clock_t end = clock();
+//        double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+//        printf("both side of image spend %f seconds\n",time_spent);
         
         imgCombineDouble2Char(ppm1, ppm2, nrows, 3*ncols/2, y);
 //        imgCombineDouble2Char(out1, out2, nrows, ncols/2, y);
-
+        
         
         
         
@@ -93,7 +98,7 @@ int main(int argc, const char * argv[]) {
         
         /* CLOSE FILE & QUIT */
         
-        fprintf(fParameter, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t\n", paraRight[0],paraRight[1],paraRight[2],paraRight[3],paraRight[4],paraRight[5],paraRight[6],paraLeft[0],paraLeft[1],paraLeft[2],paraLeft[3],paraLeft[4],paraLeft[5],paraLeft[6]);
+        fprintf(fParameter, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t\n", (double)paraRight[0],(double)paraRight[1],(double)paraRight[2],(double)paraRight[3],(double)paraRight[4],(double)paraRight[5],(double)paraRight[6],(double)paraLeft[0],(double)paraLeft[1],(double)paraLeft[2],(double)paraLeft[3],(double)paraLeft[4],(double)paraLeft[5],(double)paraLeft[6]);
         
         printf("processed: %d\n",index);
 
@@ -109,7 +114,8 @@ int main(int argc, const char * argv[]) {
         freeStnMatrix((void**)px);
         freeStnMatrix((void**)py);
         
-        
+        fclose(fpx);
+        fclose(fpy);
     }
     
     fclose(fParameter);

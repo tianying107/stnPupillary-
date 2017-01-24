@@ -21,6 +21,7 @@ void converInd(unsigned char **x, int nrows, int ncols, double **intImage);
 void imgDouble2Char(double **doubleImage, int nrows, int ncols, unsigned char **charImage);
 void imgCombineDouble2Char(double **doubleImage1, double **doubleImage2, int nrows, int ncols, unsigned char **charImage);
 void imgInt2Double(int **intImage, int nrows, int ncols, double **doubleImage);
+void imgChar2Double(unsigned char **intImage, int nrows, int ncols, double **doubleImage);
 /**
  *stn Dynamic array struct and relate functions
  */
@@ -32,7 +33,11 @@ typedef struct {
 void initStnArray(stnArray *a, size_t initialSize);
 void insertStnArray(stnArray *a, int element);
 void freeStnArray(stnArray *a);
-
+double sumStnArray(stnArray *a);
+double sumToStnArray(stnArray *a, int sumToIndex);
+double sumSquaredStnArray(stnArray *a);
+double sumPoweredStnArray(stnArray *a, double power_a);
+double sumProductStnArray(stnArray *a, double power_a, stnArray *b, double power_b);
 
 /**
  *funtion max(a,b)
@@ -54,7 +59,8 @@ void detect_peak(
                  int             data_count, /* row count of data */
                  stnArray*       peaks, /* emission peaks will be put here */
                  double          delta, /* delta used for distinguishing peaks */
-                 double          threshold   /*threshold used for filter peaks below the value*/
+                 double          threshold,   /*threshold used for filter peaks below the value*/
+                 int             deltaMode        /*1:use delta on the right side of peak; 2:use delta on both sides of peak*/
 );
 void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols], double multiply[nrows][nrows]);
 void stnMatrixMultiply(int nrows1, int nrows2, int ncols, double matrix1[nrows1][ncols], double matrix2[ncols][nrows2], double multiply[nrows1][nrows2]);
