@@ -28,10 +28,10 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     
     
-    bool binearyOutput = false;
-    bool dynamicThresholdMode = false;
-    bool useSafePointOnly = false;
-    bool drawSafePoint = false;
+    bool binearyOutput = true;
+    bool dynamicThresholdMode = true;
+    bool useSafePointOnly = true;
+    bool drawSafePoint = true;
     /*****
      *****
      *****HISTOGRAM EQULIZATION AND FIX THRESHOLD SECTION*****
