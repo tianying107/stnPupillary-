@@ -28,7 +28,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     
     
-    bool binearyOutput = true;
+    bool binearyOutput = false;
     bool dynamicThresholdMode = true;
     bool useSafePointOnly = true;
     bool drawSafePoint = true;
@@ -218,7 +218,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     /*******Ellipse*******/
     /*ellipse fitting*/
-    double ellipseParameters[5];
+    double ellipseParameters[6];
 //    begin = clock();
     stnEllipseFitting(&safeRows, &safeCols, &centerPoint,ellipseParameters);
     double ellipse[3];
@@ -226,9 +226,11 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
 //    end = clock();
 //    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
     /*ellipse points*/
-    stnArray ellipseRows, ellipseCols;
+    stnArray ellipseRows, ellipseCols, averageRows, averageCols;
     initStnArray(&ellipseCols, 1);
     initStnArray(&ellipseRows, 1);
+    initStnArray(&averageRows, 1);
+    initStnArray(&averageCols, 1);
     
     
     /*******Circle*******/
@@ -269,8 +271,9 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     /*******get circle points**********/
 //    begin = clock();
-    stnCirclePoints(&ellipseRows, &ellipseCols, ellipse);
+    stnCirclePoints(&averageRows, &averageCols, ellipse);
     stnCirclePoints(&circleRows, &circleCols, parameters);
+    stnEllipsePoints(&ellipseRows, &ellipseCols, ellipseParameters);
 //    end = clock();
 //    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
@@ -287,13 +290,15 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     /*draw the circle*/
     double redColor[3] = {1,0,0};
     double blueColor[3] = {0,0,1};
+    double yellowColor[3] = {1,1,0};
     stnDrawColorPoints(&circleRows, &circleCols, outputppm, nrows, ncols, redColor);
-    stnDrawColorPoints(&ellipseRows, &ellipseCols, outputppm, nrows, ncols, blueColor);
+    stnDrawColorPoints(&averageRows, &averageCols, outputppm, nrows, ncols, blueColor);
+    stnDrawColorPoints(&ellipseRows, &ellipseCols, outputppm, nrows, ncols, yellowColor);
     if (drawSafePoint) {
         double greenColor[3] = {0.2,1,0.2};
         stnDrawColorPoints(&safeRows, &safeCols, outputppm, nrows, ncols, greenColor);
     }
-    stnDrawPoints(&circleRows, &circleCols, inputImg, nrows, ncols, outputImg);
+    // stnDrawPoints(&circleRows, &circleCols, inputImg, nrows, ncols, outputImg);
 
 
     //release memory
@@ -305,6 +310,10 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     freeStnArray(&safeCols);
     freeStnArray(&circleRows);
     freeStnArray(&circleCols);
+    freeStnArray(&averageRows);
+    freeStnArray(&averageCols);
+    freeStnArray(&ellipseRows);
+    freeStnArray(&ellipseCols);
     
     freeStnMatrix((void**)y);
     freeStnMatrix((void**)binearImg);

@@ -628,7 +628,7 @@ void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *break
 /**
  *stnEllipseFitting
  */
-void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, double parameters[5]){
+void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, double parameters[6]){
     int i;
     int length = (int)pointRows->used;
     double D[6][length];
@@ -675,6 +675,8 @@ void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *cente
     parameters[2]=rb;
     parameters[3]=ra;
     parameters[4]=radius;
+    parameters[5]=atan2(2, (a-c)/(2*b));
+    
 }
 
 /**
@@ -797,9 +799,21 @@ void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, double parameters
         insertStnArray(pointCols, col);
     }
 }
+/**
+ *stnEllipsePoints
+ */
+void stnEllipsePoints(stnArray *pointRows, stnArray *pointCols, double parameters[6]){
+    int i;
+    for (i=0; i<1000*2*PI; i++) {
+        int col = parameters[1]+cos(parameters[5])*parameters[2]*cos(((double)i)/1000)-sin(parameters[5])*parameters[3]*sin(((double)i)/1000);
+        int row = parameters[0]+sin(parameters[5])*parameters[2]*cos(((double)i)/1000)+cos(parameters[5])*parameters[3]*sin(((double)i)/1000);
+        insertStnArray(pointRows, row);
+        insertStnArray(pointCols, col);
+    }
+}
 
 /**
- *stnCirclePoints
+ *stnDrawPoints
  */
 void stnDrawPoints(stnArray *pointRows, stnArray *pointCols, unsigned char **inputImg, int nrows, int ncols, double **outputImg){
     int i,j,row,col;

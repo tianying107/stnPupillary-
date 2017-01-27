@@ -33,10 +33,11 @@ void stnBoundaryPoint(int **inputImg, int nrows, int ncols, stnPoint *centerPoin
 void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, stnArray *directionArray, stnArray *contourMapRow, stnArray *contourMapCol);
 double *stnCurvature(stnArray *directionArray, int windowSize);
 void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *breakPoints, stnPoint *rightPoint, stnArray *safeRows, stnArray *safeCols);
-void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, double parameters[5]);
+void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, double parameters[6]);
 void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, double parameters[3]);
 void stnMLSCircleFitting(stnArray *pointRows, stnArray *pointCols, double parameters[3]);
 void stnCirclePoints(stnArray *pointRows, stnArray *pointCols, double parameters[3]);
+void stnEllipsePoints(stnArray *pointRows, stnArray *pointCols, double parameters[6]);
 void stnDrawPoints(stnArray *pointRows, stnArray *pointCols, unsigned char **inputImg, int nrows, int ncols, double **outputImg);
 void stnDrawColorPoints(stnArray *pointRows, stnArray *pointCols, double **inputImg, int nrows, int ncols, double color[3]);
 void stnGray2RGB(double **inputImg, int nrows, int ncols, double **outputImg);
