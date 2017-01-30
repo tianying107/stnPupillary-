@@ -167,12 +167,29 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     /*grow_circle*/
 //    begin = clock();
+    bool invalidCenter=false;
     growthCircle(&centerPoint, binearImg, nrows, ncols,allParameters[6]);
+    if (centerPoint.row == -3340 && centerPoint.col == -3012)
+        invalidCenter = true;
     stnFindCentral(binearImg, nrows, ncols, &centerPoint);
     growthCircle(&centerPoint, binearImg, nrows, ncols,allParameters[6]);
+    if (centerPoint.row == -3340 && centerPoint.col == -3012)
+        invalidCenter = true;
     stnFindCentral(binearImg, nrows, ncols, &centerPoint);
     growthCircle(&centerPoint, binearImg, nrows, ncols,allParameters[6]);
+    if (centerPoint.row == -3340 && centerPoint.col == -3012)
+        invalidCenter = true;
     stnFindCentral(binearImg, nrows, ncols, &centerPoint);
+    if (invalidCenter) {
+        allParameters[0]=0;
+        allParameters[1]=0;
+        allParameters[2]=0;
+        allParameters[3]=0;
+        allParameters[4]=0;
+        allParameters[5]=0;
+        allParameters[6]=0;
+        return;
+    }
 //    printf("%d , %d \n",centerPoint.row,centerPoint.col);
 //    printf("point=%d\n",binearImg[centerPoint.row][centerPoint.col]);
 //    end = clock();
@@ -218,7 +235,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     /*******Ellipse*******/
     /*ellipse fitting*/
-    double ellipseParameters[6];
+    double ellipseParameters[6] = {0,0,0,0,0,0};
 //    begin = clock();
     stnEllipseFitting(&safeRows, &safeCols, &centerPoint,ellipseParameters);
     double ellipse[3];
@@ -268,6 +285,17 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
 //        printf("%f, %f, %f\n",parameters[1],parameters[0],parameters[2]);
         printf("invalid center point.\n");
     }
+    if (fabs(parameters[0])>max(nrows, ncols) || fabs(parameters[1])>max(nrows, ncols) || fabs(parameters[2])>max(nrows, ncols)) {
+        parameters[1]=0;
+        parameters[0]=0;
+        parameters[2]=0;
+    }
+    if ( isnan(ellipseParameters[0]) ||  isnan(ellipseParameters[1]) ||  isnan(ellipseParameters[2]) ||  isnan(ellipseParameters[3])) {
+        ellipseParameters[1]=0;
+        ellipseParameters[0]=0;
+        ellipseParameters[2]=0;
+        ellipseParameters[3]=0;
+    }
     
     /*******get circle points**********/
 //    begin = clock();
@@ -314,7 +342,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     freeStnArray(&averageCols);
     freeStnArray(&ellipseRows);
     freeStnArray(&ellipseCols);
-    
+    free(histogram);
     freeStnMatrix((void**)y);
     freeStnMatrix((void**)binearImg);
     allParameters[0]=ellipseParameters[1];
@@ -325,5 +353,5 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     allParameters[5]=parameters[0];
     allParameters[6]=parameters[2];
     
-    free(histogram);
+    
 }

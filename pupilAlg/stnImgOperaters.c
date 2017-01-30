@@ -237,7 +237,7 @@ int connectivityLabel(int **inputImg, int nrows, int ncols, int **labeledImg){
 
 /**
  *Growth Circle algorithm, an algorithm to label the largest blob
- *Version 1.1 
+ *Version 1.2
  *NEW FEAUTRES: using previous radius result to guess the starting point
  */
 void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, int radius){
@@ -245,8 +245,13 @@ void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, i
     int i,j,count;
     //test previous radius
     count = 0;
+    
+    if ((centerPoint->col)>=ncols || (centerPoint->row)>=nrows || centerPoint->col<0 || centerPoint->row<0){
+        centerPoint->row = -3340; centerPoint->col = -3012;
+        printf("center point invalid.");
+        return;
+    }
     for (i=0; i<500*PI; i++) {
-        //printf("r=%d\n",radius);
         int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
         int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
         int value1 = inputImg[row][col];
