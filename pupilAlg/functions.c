@@ -353,7 +353,6 @@ double sumSquaredStnArray(stnArray *a){
 }
 double sumPoweredStnArray(stnArray *a, double power_a){
     double my_sum = 0;
-//    printf("a0: %d\n",a->array[0]);
     for (int i = 0; i < (int)a->used; i++){
         my_sum += pow((double)a->array[i], power_a);
     }
@@ -370,34 +369,28 @@ double sumProductStnArray(stnArray *a, double power_a, stnArray *b, double power
     return my_sum;
 }
 
-double sum(double x[], int arr_count){
-    int i = 0;
-    double my_sum = 0;
-    
-    for (i = 0; i < arr_count; i++){
-        my_sum += x[i];
-    }
-    return my_sum;
-}
+
 
 double stnInterp2(int nrows, int ncols, int intMatrix[nrows][ncols], double row, double col){
     int x_min=0, x_max=7, y_min=0, y_max=7;
     double mf, nf; // fractional parts
     int m, n;// m and n are row and column indices
-   
-    // Find integer and fractional part of column index
-    nf = (ncols-1) * (col - x_min) / (x_max - x_min);
-    n = (int)nf;
-    nf = nf - n;
-    
-    // Find integer and fractional part of row index
-    mf = (nrows-1) * (row - y_min) / (y_max - y_min);
-    m = (int)mf;
-    mf = mf - m;
-    
-    // Calculate interpolated estimated
-    double result = (1-nf)*(1-mf)*intMatrix[m][n] + nf*(1-mf)*intMatrix[m][n+1]
-    + (1-nf)*mf*intMatrix[m+1][n] + nf*mf*intMatrix[m+1][n+1];
+    double result;
+    if (row<=7&&col<=7&&row>=0&&col>=0) {
+        // Find integer and fractional part of column index
+        nf = (ncols-1) * (col - x_min) / (x_max - x_min);
+        n = (int)nf;
+        nf = nf - n;
+        
+        // Find integer and fractional part of row index
+        mf = (nrows-1) * (row - y_min) / (y_max - y_min);
+        m = (int)mf;
+        mf = mf - m;
+        
+        // Calculate interpolated estimated
+        result = (1-nf)*(1-mf)*intMatrix[m][n] + nf*(1-mf)*intMatrix[m][n+1]
+        + (1-nf)*mf*intMatrix[m+1][n] + nf*mf*intMatrix[m+1][n+1];
+    }
     
     return result;
     
@@ -450,7 +443,7 @@ void detect_peak(
 }
 
 /*eigen vector and eigen value using power method*/
-double *stnEigenVector(int nSize, double intMatrix[nSize][nSize]){
+double *stnEigenVector(int nSize, double **intMatrix){
     int i,j,n;
     n=nSize;
     double z[nSize], e[nSize],zmax,emax;//,x[nSize];
@@ -502,7 +495,7 @@ double *stnEigenVector(int nSize, double intMatrix[nSize][nSize]){
 /**
  *do the matrix multiply U * U'
  */
-void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols], double multiply[nrows][nrows]){
+void stnMatrixSquare(int nrows, int ncols, double **matrix, double **multiply){
     int i, j, k;
     double sum = 0;
     
@@ -524,7 +517,7 @@ void stnMatrixSquare(int nrows, int ncols, double matrix[nrows][ncols], double m
 /**
  *do the matrix multiply 
  */
-void stnMatrixMultiply(int nrows1, int nrows2, int ncols, double matrix1[nrows1][ncols], double matrix2[ncols][nrows2], double multiply[nrows1][nrows2]){
+void stnMatrixMultiply(int nrows1, int nrows2, int ncols, double **matrix1, double **matrix2, double **multiply){
     int i, j, k;
     double sum = 0;
     
@@ -641,7 +634,7 @@ double Determinant(double **a,int n){
     return(det);
 }
 
-void stnMatrixInverse(int nrows, double squareMatrix[nrows][nrows]){
+void stnMatrixInverse(int nrows, double **squareMatrix){
     if (nrows==3) {
         double a11,a12,a13,a21,a22,a23,a31,a32,a33;
         a11 = squareMatrix[0][0];a12 = squareMatrix[0][1];a13 = squareMatrix[0][2];
@@ -697,4 +690,19 @@ void imgCombineDouble2Char(double **doubleImage1, double **doubleImage2, int nro
             charImage[i][j+ncols]=value2;
         }
     }
+}
+
+double *firstDev(double *input, int size){
+    double *firstDerivative = (double *)malloc(size*sizeof(double));
+    int i;
+    for (i=0; i<size; i++) {
+        if (i==0||i==size-1) {
+            firstDerivative[i]=0;
+        }
+        else{
+            firstDerivative[i] = (input[i+1]-input[i-1])/2;
+        }
+    }
+    
+    return firstDerivative;
 }

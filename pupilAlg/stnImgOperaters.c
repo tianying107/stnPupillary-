@@ -17,7 +17,6 @@ static int count;
 void imageSplit(unsigned char **combinedImg, int nrows, int newWidth, unsigned char **img1, unsigned char **img2){
     for (int i = 0; i<nrows; i++) {
         for (int j = 0; j<newWidth; j++) {
-//            printf("col1:%d, col2:%d\n",j,j+newWidth);
             img1[i][j] = combinedImg[i][j];
             img2[i][j] = combinedImg[i][j+newWidth];
         }
@@ -32,7 +31,6 @@ double *movingWindowSmooth(double *input, int windowSize, int inputSize){
     output[255] = input[255];
     for (i=startIndex; i<inputSize-startIndex; i++) {
         output[i] = (input[i-1]+input[i]+input[i+1])/(double)windowSize;
-//        printf("%d: %f , %d: %f , %d: %f, out:%f\n",i-1,input[i-1],i,input[i],i+1,input[i+1],output[i]);
     }
     return output;
 }
@@ -58,7 +56,6 @@ double *imageHistogram(unsigned char **inputImg, int nrows, int ncols){
         histogram[i]=histogram[i]/Num;
         
     }
-//    printf("%f\n",histogram[0]);
     return histogram;
 }
 void imageHistogramEqualization(unsigned char **inputImg, int nrows, int ncols, int lower, int upper, double **outputImg){
@@ -113,6 +110,8 @@ void imageHistogramEqualization(unsigned char **inputImg, int nrows, int ncols, 
     }
 }
 
+/**
+ *deprecated function
 void dynamicHistogramEqualization(unsigned char **inputImg, int nrows, int ncols, int lower, int upper, int radius, double **outputImg){
     int i, j,ii,jj;
     int Num,XL,H[256];
@@ -172,7 +171,8 @@ void dynamicHistogramEqualization(unsigned char **inputImg, int nrows, int ncols
     }
 
 }
-
+*/
+ 
 void imageThreshold(double **inputImg, int nrows, int ncols, double threshold, int **binearImg){
     int i, j;
     for (i=0; i<nrows; i++) {
@@ -187,7 +187,7 @@ void imageThreshold(double **inputImg, int nrows, int ncols, double threshold, i
     }
 }
 
-/**
+/**DEPRECATED
  *Version 1.0
  *connectivityLabel is a function to isolate blobs and label from the input image using 8-neighbour connectivity analysis
  *inputImg is the input binary image
@@ -246,7 +246,7 @@ void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, i
     //test previous radius
     count = 0;
     
-    if ((centerPoint->col)>=ncols || (centerPoint->row)>=nrows || centerPoint->col<0 || centerPoint->row<0){
+    if ((centerPoint->col)>=ncols || (centerPoint->row)>=nrows || centerPoint->col<0 || centerPoint->row<0 || centerPoint == NULL){
         centerPoint->row = -3340; centerPoint->col = -3012;
         printf("center point invalid.");
         return;
@@ -354,7 +354,7 @@ void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, i
 
 
 
-/**
+/**DEPRECATED
  *flood_fill algorithm, here use 6-neighbour connectivity analysis to avoid block
  *A static variable count to count the number of current label
  */
@@ -377,7 +377,7 @@ void flood_fill(int x,int y,int label, int **labelImg, int nrows, int ncols){
 
 
 
-/**
+/**DEPRECATED
  *filterBlobWithLabel is a function can pick up the blob in a well labeled image using a specific label
  *labelImage is a well labeled image, with nrows rows and ncols column. It is both input and output.
  *label is the target label
@@ -398,19 +398,24 @@ void filterBlobWithLabel(int **labelImage, int nrows, int ncols, int label){
 
 
 /**
+ *version 1.1
  *stnMedianFilter is a 2-D median filter that only work on binary image
  */
 void stnMedianFilter(int **inputImg, int nrows, int ncols, int filterWidth, int filterHeight){
     int edgeX, edgeY, i, j, filterX, filterY, sum;
-    int **filteredImg;
     
-    filteredImg = inputImg;
+    int **filteredImg=(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
+    for (i=0; i<nrows; i++) {
+        for (j=0; j<ncols; j++) {
+            filteredImg[i][j]=inputImg[i][j];
+        }
+    }
     edgeX = (filterWidth-1)/2;
     edgeY = (filterHeight-1)/2;
     for (i=edgeY; i<nrows-edgeY; i++) {
         for (j=edgeX; j<ncols-edgeX; j++) {
             sum = 0;
-            for (filterY=i-edgeY; filterY<i+edgeY+1;filterY++) {
+            for (filterY=i-edgeY; filterY<i+edgeY+1 ;filterY++) {
                 for (filterX = j-edgeX; filterX<j+edgeX+1; filterX++) {
                     sum += inputImg[filterY][filterX];
                 }
@@ -418,7 +423,12 @@ void stnMedianFilter(int **inputImg, int nrows, int ncols, int filterWidth, int 
             filteredImg[i][j]=(int)(sum/ceil((((float)(filterWidth*filterHeight))/2)));
         }
     }
-    inputImg = filteredImg;
+    for (i=0; i<nrows; i++) {
+        for (j=0; j<ncols; j++) {
+            inputImg[i][j]=filteredImg[i][j];
+        }
+    }
+    freeStnMatrix((void**)filteredImg);
 }
 
 
@@ -444,88 +454,71 @@ void stnFindCentral(int **inputImg, int nrows, int ncols, stnPoint *centerPoint)
     }
     centerPoint->col = round(((double)x)/count);
     centerPoint->row = round(((double)y)/count);
-//    printf("center at row:%d col:%d\n",centerPoint->row,centerPoint->col);
 }
 
 /**
+ *version 1.1
  *stnBoundaryPoints
  */
 void stnBoundaryPoint(int **inputImg, int nrows, int ncols, stnPoint *centerPoint, stnPoint *leftPoint, stnPoint *rightPoint){
     int x = centerPoint->col;
     int y = centerPoint->row;
-    int windowSize = nrows/10;//24;
-    //any holes within the pupil blob were classified as a corneal relection if the hole width was less than this value
-    //true point at here is black (i.e. the value of center point is 0)
-    
-    /**left boundary point*/
-    int sum = 0;
-    for (int i=0; i<windowSize && x-i>=0; i++) {
-        sum += inputImg[y][x-i];
-    }
-    //sum < windowSize means there is at least one point in the window is black
-    while (sum<windowSize && x) {
-        x--;
-        sum=0;
-        for (int i=0; (i<windowSize && x-i>=0); i++) {
+    int windowSize = nrows/10;
+    if (y>=0&&y<nrows&&x>=0&&x<ncols) {
+        //any holes within the pupil blob were classified as a corneal relection if the hole width was less than this value
+        //true point at here is black (i.e. the value of center point is 0)
+        
+        /**left boundary point*/
+        int sum = 0;
+        for (int i=0; i<windowSize && x-i>=0; i++) {
             sum += inputImg[y][x-i];
         }
-    }
-    leftPoint->col = x+1;
-    leftPoint->row = y;
-
-    /**right boundary point*/
-    sum = 0;
-    for (int i=0; i<windowSize && x+i<ncols; i++) {
-        sum += inputImg[y][x+i];
-    }
-//    printf("x: %d\n",x);
-    while (sum<min(windowSize, ncols-x) && x<ncols) {
-//        printf("x: %d sum:%d window:%d\n",x,sum,min(windowSize, ncols-x));
-        x++;
-        sum=0;
+        //sum < windowSize means there is at least one point in the window is black
+        while (sum<windowSize && x) {
+            x--;
+            sum=0;
+            for (int i=0; (i<windowSize && x-i>=0); i++) {
+                sum += inputImg[y][x-i];
+            }
+        }
+        leftPoint->col = x+1;
+        leftPoint->row = y;
+        
+        /**right boundary point*/
+        sum = 0;
         for (int i=0; i<windowSize && x+i<ncols; i++) {
             sum += inputImg[y][x+i];
         }
+        while (sum<min(windowSize, ncols-x) && x<ncols) {
+            x++;
+            sum=0;
+            for (int i=0; i<windowSize && x+i<ncols; i++) {
+                sum += inputImg[y][x+i];
+            }
+        }
+        rightPoint->col = x-1;
+        rightPoint->row = y;
     }
-    rightPoint->col = x-1;
-    rightPoint->row = y;
-    
 }
 
 /**
+ *version 1.1
  *stnContourBound
  */
 void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, stnArray *directionArray, stnArray *contourMapRow, stnArray *contourMapCol){
-    int mapPlus2[8]={2,3,4,5,6,7,0,1};
-    int mapMinus1[8]={7,0,1,2,3,4,5,6};
+    int *mapPlus2=malloc(8*sizeof(int));//{2,3,4,5,6,7,0,1};
+    mapPlus2[0]=2;mapPlus2[1]=3;mapPlus2[2]=4;mapPlus2[3]=5;mapPlus2[4]=6;mapPlus2[5]=7;mapPlus2[6]=0;mapPlus2[7]=1;
+    int *mapMinus1=malloc(8*sizeof(int));//{7,0,1,2,3,4,5,6};
+    mapMinus1[0]=7;mapMinus1[1]=0;mapMinus1[2]=1;mapMinus1[3]=2;mapMinus1[4]=3;mapMinus1[5]=4;mapMinus1[6]=5;mapMinus1[7]=6;
     int direction = 1; //initial direction is 1
     int x = leftPoint->col;
     int y = leftPoint->row;
-    initStnArray(directionArray, 1);
-    initStnArray(contourMapRow, 1);
-    initStnArray(contourMapCol, 1);
     
-    int map[16] = {y-1,x+1,y-1,x,y-1,x-1,y,x-1,y+1,x-1,y+1,x,y+1,x+1,y,x+1};
+    int *map = malloc(16*sizeof(int));//{y-1,x+1,y-1,x,y-1,x-1,y,x-1,y+1,x-1,y+1,x,y+1,x+1,y,x+1};
+    map[0]=y-1;map[1]=x+1;map[2]=y-1;map[3]=x;map[4]=y-1;map[5]=x-1;map[6]=y;map[7]=x-1;map[8]=y+1;map[9]=x-1;map[10]=y+1;map[11]=x;map[12]=y+1;map[13]=x+1;map[14]=y;map[15]=x+1;
     direction = mapPlus2[direction];
-    for (int j=0; j<8; j++) {
-        if (inputImg[map[direction*2]][map[direction*2+1]]==1) {
-            direction = mapMinus1[direction];
-        }
-        else{
-            
-            insertStnArray(directionArray, direction);
-            insertStnArray(contourMapRow, y);
-            insertStnArray(contourMapCol, x);
-            y = map[direction*2];
-            x = map[direction*2+1];
-            break;
-        }
-    }
     
-    while ((y-1) && (x-1) && (y+1<nrows) && (x+1<ncols) && (x!=leftPoint->col || y!=leftPoint->row)) {
-        int map[16] = {y-1,x+1,y-1,x,y-1,x-1,y,x-1,y+1,x-1,y+1,x,y+1,x+1,y,x+1};
-        direction = mapPlus2[direction];
-        for (int j=0; j<8; j++) {
+    for (int j=0; j<8; j++) {
             if (inputImg[map[direction*2]][map[direction*2+1]]==1) {
                 direction = mapMinus1[direction];
             }
@@ -537,11 +530,29 @@ void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, 
                 x = map[direction*2+1];
                 break;
             }
-        }
+    }
+    
+    while ((y-1) && (x-1) && (y+1<nrows) && (x+1<ncols) && (x!=leftPoint->col || y!=leftPoint->row)) {
+        int map[16] = {y-1,x+1,y-1,x,y-1,x-1,y,x-1,y+1,x-1,y+1,x,y+1,x+1,y,x+1};
+        direction = mapPlus2[direction];
+        for (int j=0; j<8; j++) {
+                if (inputImg[map[direction*2]][map[direction*2+1]]==1) {
+                    direction = mapMinus1[direction];
+                }
+                else{
+                    insertStnArray(directionArray, direction);
+                    insertStnArray(contourMapRow, y);
+                    insertStnArray(contourMapCol, x);
+                    y = map[direction*2];
+                    x = map[direction*2+1];
+                    break;
+                }
+            }
     }
 
 }
 /**
+ *version 1.1
  *stnCurvature
  */
 double *stnCurvature(stnArray *directionArray, int windowSize){
@@ -585,17 +596,39 @@ double *stnCurvature(stnArray *directionArray, int windowSize){
 //    for (int i=0; i<length; i++) {
 //        printf("%f\n",curvature[i]);
 //    }
+    freeStnArray(&newDirection);
     return curvature;
+}
+
+/** INCOMPLETE
+ *stnDirectionDifference
+ */
+double stnDirectionDifference(double direction1, double direction2){
+    int circleMap[8][8] = {{0,1,2,3,4,-3,-2,-1},
+        {-1,0,1,2,3,4,-3,-2},
+        {-2,-1,0,1,2,3,4,-3},
+        {-3,-2,-1,0,1,2,3,4},
+        {4,-3,-2,-1,0,1,2,3},
+        {3,4,-3,-2,-1,0,1,2},
+        {2,3,4,-3,-2,-1,0,1},
+        {1,2,3,4,-3,-2,-1,0}};
+    
+    
+    double diff=0;
+    if (direction1>=0 && direction1<8 && direction2>=0 && direction2<8) {
+        diff = stnInterp2(8, 8, circleMap, direction1 , direction2);
+    }
+    return diff;
 }
 
 /**
  *stnSafePoints
+ *version 1.1
  */
-void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *breakPoints, stnPoint *rightPoint, stnArray *safeRows, stnArray *safeCols){
+void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *directionArray, stnArray *breakPoints, stnPoint *rightPoint, stnArray *safeRows, stnArray *safeCols){
     /*calculate left safe points upper and lower boundary index first*/
     int leftUpperIndex = breakPoints->array[0];
     int leftLowerIndex = breakPoints->array[(int)breakPoints->used - 1];
-//    printf("0 - %d, %d - end\n",leftUpperIndex,leftLowerIndex);
     /*then find out right point index in contour*/
     int rightIndex = 0;
     for (int i = 0; i<(int)contourRows->used; i++) {
@@ -614,15 +647,21 @@ void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *break
             break;
         }
     }
-//    printf("%d - %d\n",rightLowerIndex,rightUpperIndex);
+    //left safe boundary
+    int leftSafeCount = 0;
     for (int i=0; i<(int)contourRows->used; i++) {
-        if (i<leftUpperIndex||i>leftLowerIndex||(i>rightLowerIndex&&i<rightUpperIndex)) {
-
+        if (i<leftUpperIndex||i>leftLowerIndex) {
             insertStnArray(safeRows, contourRows->array[i]);
             insertStnArray(safeCols, contourCols->array[i]);
+            leftSafeCount += 1;
         }
     }
-//    printf("right point: %d, %d\n",rightPoint->row, rightPoint->col);
+
+    //right safe boundary
+    for (int i=rightLowerIndex; i<=rightUpperIndex; i++) {
+            insertStnArray(safeRows, contourRows->array[i]);
+            insertStnArray(safeCols, contourCols->array[i]);
+    }
     if (rightIndex == 0) {
         insertStnArray(safeRows, rightPoint->row);
         insertStnArray(safeCols, rightPoint->col);
@@ -631,14 +670,15 @@ void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *break
 }
 
 /**
+ *version 1.1
  *stnEllipseFitting
  */
 void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, double parameters[6]){
     int i;
     int length = (int)pointRows->used;
-    double D[6][length];
+    double **D=(double **)matrix(6, length, 0, 0, sizeof(double));
     double *eigenParameter;
-    double squareMatrix[6][6];//a matrix that d*d'(aka the square matrix used in least square, inverse)
+    double **squareMatrix=(double **)matrix(6, 6, 0, 0, sizeof(double));//a matrix that d*d'(aka the square matrix used in least square, inverse)
     
     
     for (i=0; i<length; i++) {
@@ -652,13 +692,20 @@ void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *cente
     stnMatrixSquare(6, length, D, squareMatrix);
     stnMatrixInverse(6, squareMatrix);
     
-    double C[6][6]={{0,0,2,0,0,0},
-                    {0,-1,0,0,0,0},
-                    {2,0,0,0,0,0},
-                    {0,0,0,0,0,0},
-                    {0,0,0,0,0,0},
-                    {0,0,0,0,0,0}};
-    double pMatrix[6][6];
+//    double C[6][6]={{0,0,2,0,0,0},
+//                    {0,-1,0,0,0,0},
+//                    {2,0,0,0,0,0},
+//                    {0,0,0,0,0,0},
+//                    {0,0,0,0,0,0},
+//                    {0,0,0,0,0,0}};
+    double **C=(double **)matrix(6, 6, 0, 0, sizeof(double));
+    for (i=0; i<6; i++) {
+        for (int j=0; j<6; j++) {
+            C[i][j]=0;
+        }
+    }
+    C[0][2]=2;C[2][0]=2;C[1][1]=-1;
+    double **pMatrix=(double **)matrix(6, 6, 0, 0, sizeof(double));
     stnMatrixMultiply(6, 6, 6, squareMatrix, C, pMatrix);
     eigenParameter=stnEigenVector(6, pMatrix);
     double a=eigenParameter[0],b=eigenParameter[1]/2,c=eigenParameter[2],d=eigenParameter[3]/2,e=eigenParameter[4]/2,f=eigenParameter[5];
@@ -681,19 +728,24 @@ void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *cente
     parameters[3]=ra;
     parameters[4]=radius;
     parameters[5]=atan2(2, (a-c)/(2*b));
-    
+    free(eigenParameter);
+    freeStnMatrix((void**)D);
+    freeStnMatrix((void**)squareMatrix);
+    freeStnMatrix((void**)C);
+    freeStnMatrix((void**)pMatrix);
 }
 
 /**
+ *version 1.1
  *stnCircleFitting
  */
 void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, double parameters[3]){
     int i;
     
     int length = (int)pointRows->used;
-    double d[3][length];//a matrix of [x; y; 1];
-    double squareMatrix[3][3];//a matrix that d*d'(aka the square matrix used in least square, inverse)
-    double rMatrix[length][1];
+    double **d=(double **)matrix(3, length, 0, 0, sizeof(double));//a matrix of [x; y; 1];
+    double **squareMatrix=(double **)matrix(3, 3, 0, 0, sizeof(double));//a matrix that d*d'(aka the square matrix used in least square, inverse)
+    double **rMatrix=(double **)matrix(length, 1, 0, 0, sizeof(double));
     for (i=0; i<length; i++) {
         d[0][i]=(double)pointCols->array[i];
         d[1][i]=(double)pointRows->array[i];
@@ -708,26 +760,28 @@ void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, double parameter
     stnMatrixInverse(3, squareMatrix);
 
     
-    double pMatrix[3][length];// the matrix (U'*U)\U'
+    double **pMatrix=(double **)matrix(3, length, 0, 0, sizeof(double));// the matrix (U'*U)\U'
     stnMatrixMultiply(3, length, 3, squareMatrix, d, pMatrix);
 
-    double paraMatrix[3][1];
+    double **paraMatrix=(double **)matrix(3, 1, 0, 0, sizeof(double));;
     stnMatrixMultiply(3, 1, length, pMatrix, rMatrix, paraMatrix);
 
     double xhat = paraMatrix[0][0]/2;//col
     double yhat = paraMatrix[1][0]/2;//row
     
-    int radius = round(sqrt(pow(xhat, 2)+pow(yhat, 2)+paraMatrix[2][0]));
-    int centerX = round(xhat);
-    int centerY = round(yhat);
     parameters[0]=yhat;
     parameters[1]=xhat;
     parameters[2]=sqrt(pow(xhat, 2)+pow(yhat, 2)+paraMatrix[2][0]);
     
+    freeStnMatrix((void**)d);
+    freeStnMatrix((void**)squareMatrix);
+    freeStnMatrix((void**)rMatrix);
+    freeStnMatrix((void**)pMatrix);
+    freeStnMatrix((void**)paraMatrix);
 //    printf("regular cx: %d, cy: %d, r: %d\n",centerX,centerY,radius);
     
 }
-/**
+/** unused
  *stnMLSCircleFitting
  *Modified Least Squares Method
  */
@@ -758,14 +812,6 @@ void stnMLSCircleFitting(stnArray *pointRows, stnArray *pointCols, double parame
     D = 0.5*(length*sxy2-sx*sy2+length*sx3-sx*sx2);
     E = 0.5*(length*sx2y-sy*sx2+length*sy3-sy*sy2);
     
-    
-    
-    
-    
-    
-    
-    
-    
     /*
     
     A = length*sumSquaredStnArray(pointCols)-pow(sumStnArray(pointCols), 2);
@@ -780,7 +826,9 @@ void stnMLSCircleFitting(stnArray *pointRows, stnArray *pointCols, double parame
     centerCol=centerCol;
     double radius = 0;
     for (i=0; i<length; i++) {
-        radius += sqrt(pow((double)pointCols->array[i]-centerCol, 2)+pow((double)pointRows->array[i]-centerRow, 2));
+        if (i<(int)pointCols->used) {
+            radius += sqrt(pow((double)pointCols->array[i]-centerCol, 2)+pow((double)pointRows->array[i]-centerRow, 2));
+        }
     }
     radius = radius/((double)length);
     
@@ -790,7 +838,6 @@ void stnMLSCircleFitting(stnArray *pointRows, stnArray *pointCols, double parame
     parameters[0]=centerY;
     parameters[1]=centerX;
     parameters[2]=radiusInt;
-//    printf("MLS     cx:%d, cy:%d, r:%d\n",centerX,centerY,radiusInt);
 }
 /**
  *stnCirclePoints
@@ -861,3 +908,83 @@ void stnGray2RGB(double **inputImg, int nrows, int ncols, double **outputImg){
         }
     }
 }
+
+
+
+
+/**
+ *version 0.9
+ *stnDynamicThreshold
+ *version 2.0
+ */
+double stnDynamicThreshold2(unsigned char **inputImg,int nrows,int ncols, stnPoint *centerPoint){
+    int i, j, midY;
+    double **interImg =(double **)matrix(nrows, ncols, 0, 0, sizeof(double));
+    imgChar2Double(inputImg, nrows, ncols, interImg);
+    
+    midY = (centerPoint->row<=0||centerPoint->row>nrows)?nrows/2:centerPoint->row;
+    
+    /*middle line in horizontal way*/
+    double *midLine = (double *)malloc(ncols*sizeof(double));
+    for (i=0; i<ncols; i++) {
+        midLine[i] = 255*interImg[midY][i];
+    }
+//    double *midSmooth = movingWindowSmooth(midLine, 3, ncols);
+    
+    double *integration = (double *)malloc(256*sizeof(double));
+    for (i=0; i<256; i++) {
+        double sum = 0;
+        for (j=0; j<ncols; j++) {
+            if (midLine[j]<i+1) {
+                sum++;
+            }
+        }
+        integration[i] = sum;
+    }
+    double *smoothIntegration = movingWindowSmooth(integration, 3, 256);
+    double *deriv = firstDev(smoothIntegration, 256);
+    double maxDev = 0;
+    for (i=0; i<256; i++) {
+        maxDev = max(deriv[i], maxDev);
+    }
+    for (i=0; i<256; i++) {
+        deriv[i] = maxDev - deriv[i];
+    }
+    
+    stnArray peaks;
+    initStnArray(&peaks, 1);
+    detect_peak(deriv, 256, &peaks, maxDev/15, 0, 0);
+//        for (i = 0; i<(int)peaks.used; i++) {
+//            printf("%d\n",peaks.array[i]);
+//        }
+
+    double decision = ((double)peaks.array[2])/256;
+    if (decision>0.18) {
+        decision = ((double)peaks.array[1])/256;
+    }
+//    printf("decison: %f\n",decision);
+    freeStnArray(&peaks);
+    freeStnMatrix((void**)interImg);
+    free(midLine);
+    free(integration);
+    free(smoothIntegration);
+    free(deriv);
+    return decision;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

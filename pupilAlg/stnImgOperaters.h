@@ -32,7 +32,7 @@ void stnFindCentral(int **inputImg, int nrows, int ncols, stnPoint *centerPoint)
 void stnBoundaryPoint(int **inputImg, int nrows, int ncols, stnPoint *centerPoint, stnPoint *leftPoint, stnPoint *rightPoint);
 void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, stnArray *directionArray, stnArray *contourMapRow, stnArray *contourMapCol);
 double *stnCurvature(stnArray *directionArray, int windowSize);
-void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *breakPoints, stnPoint *rightPoint, stnArray *safeRows, stnArray *safeCols);
+void stnSafePoints(stnArray *contourRows, stnArray *contourCols, stnArray *directionArray, stnArray *breakPoints, stnPoint *rightPoint, stnArray *safeRows, stnArray *safeCols);
 void stnEllipseFitting(stnArray *pointRows, stnArray *pointCols, stnPoint *centerPoint, double parameters[6]);
 void stnCircleFitting(stnArray *pointRows, stnArray *pointCols, double parameters[3]);
 void stnMLSCircleFitting(stnArray *pointRows, stnArray *pointCols, double parameters[3]);
@@ -43,4 +43,9 @@ void stnDrawColorPoints(stnArray *pointRows, stnArray *pointCols, double **input
 void stnGray2RGB(double **inputImg, int nrows, int ncols, double **outputImg);
 
 void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, int radius);
+
+/**
+ *threshold algorithm
+ */
+double stnDynamicThreshold2(unsigned char **inputImg,int nrows,int ncols, stnPoint *centerPoint);
 #endif /* stnImgOperaters_h */

@@ -40,29 +40,14 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     int lower=0; //EQULIZATION LOWER BOUND
     int upper=255;  //EQULIZATION HIGHER BOUND
-//    unsigned char **imgQ1 = (unsigned char **)matrix(nrows/2, ncols/2, 0, 0, sizeof(unsigned char));
-
-//    clock_t begin = clock();
     imageHistogramEqualization(inputImg, nrows, ncols, lower, upper, interImg);
-// //    dynamicHistogramEqualization(inputImg, nrows, ncols, lower, upper, 20, interImg);
-// //    clock_t end = clock();
-// //    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-// //    printf("equalization spend %f seconds\n",time_spent);
-//    imgChar2Double(inputImg, nrows, ncols, interImg);
-//    int **binearImg=(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
-//    if (side==1) {
-//        imageThreshold(interImg, nrows, ncols, (double)0.37, binearImg);//best:0.19
-//    }
-//    else{
-//        imageThreshold(interImg, nrows, ncols, (double)0.18, binearImg);//best:0.19
-//    }
     int **binearImg1=(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
     imageThreshold(interImg, nrows, ncols, (double)0.19, binearImg1);//best:0.19
 
     
     /*****
      *****DYNAMIC THRESHOLD
-     *****
+     ***** version 1.1
      ***** get histogram first
      ***** 3 moving smooth second
      ***** get inverse
@@ -70,18 +55,16 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
      *****/
     imgChar2Double(inputImg, nrows, ncols, interImg);
     int **binearImg=(int **)matrix(nrows, ncols, 0, 0, sizeof(int));
-    double *histogram = imageHistogram(inputImg, nrows, ncols);
-    histogram = movingWindowSmooth(histogram, 3, 256);
+    double *rHistogram = imageHistogram(inputImg, nrows, ncols);
+    double *histogram = movingWindowSmooth(rHistogram, 3, 256);
+    free(rHistogram);
     for (int h=0; h<256; h++) {
         histogram[h] = 1 - histogram[h];
-//        printf("%f\n",histogram[h]);
     }
     stnArray histogramPeaks;
     initStnArray(&histogramPeaks, 1);
     detect_peak(histogram, 256, &histogramPeaks, 0.001, 0, 0);
-//    for (i = 0; i<(int)histogramPeaks.used; i++) {
-//        printf("%d\n",histogramPeaks.array[i]);
-//    }
+
     int decisionIndex=0;
     int candicate1, candicate2;
     if ((int)histogramPeaks.used > 1){
@@ -89,16 +72,11 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
             if (histogram[histogramPeaks.array[2]]>histogram[histogramPeaks.array[1]]) {
                 candicate2 = histogramPeaks.array[2];
             }
-            else{
-                candicate2 = histogramPeaks.array[1];
-            }
-//            candicate2 = histogramPeaks.array[2];
-//            printf("candidate1:%d,candidate2:%d\n",histogramPeaks.array[1],histogramPeaks.array[2]);
+            else candicate2 = histogramPeaks.array[1];
         }
         else candicate2 = histogramPeaks.array[1];
         candicate1 = histogramPeaks.array[0];
         decisionIndex = candicate2;
-//        printf("%d,%d\n",candicate1,candicate2);
         double checkSum = 0;
         for (i=0; i<min(candicate2+1, 256); i++) {
             checkSum += 1-histogram[i];
@@ -112,11 +90,19 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     else{
         decisionIndex = 0;
     }
-//    printf("%d\n",decisionIndex);
-    double dynamicThreshold = ((double)decisionIndex+2)/256;
+//    printf("decision1.0: %d\n",decisionIndex);
+    double dynamicThreshold = ((double)decisionIndex+4)/256;
     imageThreshold(interImg, nrows, ncols, dynamicThreshold, binearImg);//best:0.19
     
-    
+    /*****
+     *****DYNAMIC THRESHOLD
+     ***** version 2.0
+     *****/
+    stnPoint tempCenterPoint;
+    tempCenterPoint.col = ncols/2;
+    tempCenterPoint.row = nrows/2;
+    double threshold = stnDynamicThreshold2(inputImg, nrows, ncols, &tempCenterPoint);
+//    imageThreshold(interImg, nrows, ncols, threshold, binearImg);
     
     
     
@@ -126,21 +112,10 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     
     
     /*Median filter the result*/
-//    begin = clock();
     stnMedianFilter(binearImg, nrows, ncols, 21, 21);//21
-//    end = clock();
-//    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-//    printf("median filter spend %f seconds\n",time_spent);
+
     
     /*stnTricky clear*/
-//    for (i=0; i<30; i++) {
-//        for (j=0; j<30; j++) {
-//            binearImg[i][j]=1;
-//            binearImg[i][ncols-j]=1;
-//            binearImg[nrows-i-1][j]=1;
-//            binearImg[nrows-i-1][ncols-j]=1;
-//        }
-//    }
     for (i=0; i<nrows; i++) {
         for (j=0; j<30; j++) {
             binearImg[i][j]=1;
@@ -163,18 +138,18 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
         centerPoint.col=allParameters[4];
         centerPoint.row=allParameters[5];
     }
-//    printf("%d , %d \n",centerPoint.row,centerPoint.col);
-    
+
     /*grow_circle*/
-//    begin = clock();
     bool invalidCenter=false;
     growthCircle(&centerPoint, binearImg, nrows, ncols,allParameters[6]);
     if (centerPoint.row == -3340 && centerPoint.col == -3012)
         invalidCenter = true;
+    
     stnFindCentral(binearImg, nrows, ncols, &centerPoint);
     growthCircle(&centerPoint, binearImg, nrows, ncols,allParameters[6]);
     if (centerPoint.row == -3340 && centerPoint.col == -3012)
         invalidCenter = true;
+    
     stnFindCentral(binearImg, nrows, ncols, &centerPoint);
     growthCircle(&centerPoint, binearImg, nrows, ncols,allParameters[6]);
     if (centerPoint.row == -3340 && centerPoint.col == -3012)
@@ -188,13 +163,11 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
         allParameters[4]=0;
         allParameters[5]=0;
         allParameters[6]=0;
+        
         return;
     }
-//    printf("%d , %d \n",centerPoint.row,centerPoint.col);
-//    printf("point=%d\n",binearImg[centerPoint.row][centerPoint.col]);
-//    end = clock();
-//    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-//    printf("blob spend %f seconds\n",time_spent);
+    
+    //    printf("%d , %d \n",centerPoint.row,centerPoint.col);
     
 
     /*left point and right point*/
@@ -220,7 +193,7 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     initStnArray(&safeRows, 1);
     initStnArray(&safeCols, 1);
     if (useSafePointOnly) {
-        stnSafePoints(&contourMapRow, &contourMapCol, &peaks, &rightPoint, &safeRows, &safeCols);
+        stnSafePoints(&contourMapRow, &contourMapCol, &directionArray,&peaks, &rightPoint, &safeRows, &safeCols);
     }
     else{
         for (i=0; i<(int)contourMapCol.used; i++) {
@@ -229,44 +202,31 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
         }
     }
     
-        
-    
-    
-    
+    /*******Circle*******/
+    /*circle fitting*/
+    double *parameters = malloc(3*sizeof(double));
+    stnCircleFitting(&safeRows, &safeCols, parameters);
+    centerPoint.col=parameters[1];
+    centerPoint.row=parameters[0];
+    //    stnMLSCircleFitting(&safeRows, &safeCols, parameters);
     /*******Ellipse*******/
     /*ellipse fitting*/
-    double ellipseParameters[6] = {0,0,0,0,0,0};
-//    begin = clock();
+    double *ellipseParameters = malloc(6*sizeof(double));
+    for (i=0; i<6; i++) {
+        ellipseParameters[i]=0;
+    }
     stnEllipseFitting(&safeRows, &safeCols, &centerPoint,ellipseParameters);
-    double ellipse[3];
+    double *ellipse = malloc(3*sizeof(double));
     ellipse[0]=ellipseParameters[0];ellipse[1]=ellipseParameters[1];ellipse[2]=ellipseParameters[4];
-//    end = clock();
-//    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    
+    
     /*ellipse points*/
     stnArray ellipseRows, ellipseCols, averageRows, averageCols;
     initStnArray(&ellipseCols, 1);
     initStnArray(&ellipseRows, 1);
     initStnArray(&averageRows, 1);
     initStnArray(&averageCols, 1);
-    
-    
-    /*******Circle*******/
-    /*circle fitting*/
-    double parameters[3];
-    stnCircleFitting(&safeRows, &safeCols, parameters);
 
-//    stnMLSCircleFitting(&safeRows, &safeCols, parameters);
-
-    
-    
-    
-    /**compare parameters from fix threshold and dynamic threshold**/
-    
-    
-    
-    
-    
-    
     /*circle points*/
     stnArray circleRows, circleCols;
     initStnArray(&circleCols, 1);
@@ -298,12 +258,9 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     }
     
     /*******get circle points**********/
-//    begin = clock();
     stnCirclePoints(&averageRows, &averageCols, ellipse);
     stnCirclePoints(&circleRows, &circleCols, parameters);
     stnEllipsePoints(&ellipseRows, &ellipseCols, ellipseParameters);
-//    end = clock();
-//    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
     
     /*convert grayscale to rgb using equalized image*/
@@ -328,7 +285,18 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     }
     // stnDrawPoints(&circleRows, &circleCols, inputImg, nrows, ncols, outputImg);
 
-
+    
+    
+    
+    allParameters[0]=ellipseParameters[1];
+    allParameters[1]=ellipseParameters[0];
+    allParameters[2]=ellipseParameters[2];
+    allParameters[3]=ellipseParameters[3];
+    allParameters[4]=parameters[1];
+    allParameters[5]=parameters[0];
+    allParameters[6]=parameters[2];
+    
+    
     //release memory
     freeStnArray(&directionArray);
     freeStnArray(&contourMapRow);
@@ -342,16 +310,15 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
     freeStnArray(&averageCols);
     freeStnArray(&ellipseRows);
     freeStnArray(&ellipseCols);
-    free(histogram);
+    
     freeStnMatrix((void**)y);
     freeStnMatrix((void**)binearImg);
-    allParameters[0]=ellipseParameters[1];
-    allParameters[1]=ellipseParameters[0];
-    allParameters[2]=ellipseParameters[2];
-    allParameters[3]=ellipseParameters[3];
-    allParameters[4]=parameters[1];
-    allParameters[5]=parameters[0];
-    allParameters[6]=parameters[2];
+    freeStnMatrix((void**)binearImg1);
+
+    free(histogram);
+    free(curvature);
+    free(parameters);
+    free(ellipseParameters);
     
     
 }

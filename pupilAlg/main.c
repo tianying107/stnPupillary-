@@ -33,11 +33,11 @@ int main(int argc, const char * argv[]) {
     double paraLeft[7]={0,0,0,0,0,0,0},paraRight[7]={0,0,0,0,0,0,0};
     /* OPEN FILES */
     fParameter = fopen("/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/output/parameters.txt", "w");
-    for (int index=300; index<310; index++) {
+    for (int index=1; index<101; index++) {
 
         
         char name[] = "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/dataset1/frame_0001_image.pgm";
-        snprintf(name, sizeof(name), "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/dataset1/frame_%.4d_image.pgm", index);
+        snprintf(name, sizeof(name), "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/dataset4/frame_%.4d_image.pgm", index);
 //        printf("%s\n",name);
         fpx = fopen(name,"r");
         
@@ -52,7 +52,6 @@ int main(int argc, const char * argv[]) {
         /* ALLOCATE ARRAYS */
         x = (unsigned char **)matrix(nrows, ncols, 0, 0, sizeof(char));
         y = (unsigned char **)matrix(nrows, 3*ncols, 0, 0, sizeof(char));
-//        y = (unsigned char **)matrix(nrows, ncols, 0, 0, sizeof(char));
         doubleImage = (double **)matrix(nrows, ncols, 0, 0, sizeof(double));
         img1 = (unsigned char **)matrix(nrows, ncols/2, 0, 0, sizeof(unsigned char));
         img2 = (unsigned char **)matrix(nrows, ncols/2, 0, 0, sizeof(unsigned char));
