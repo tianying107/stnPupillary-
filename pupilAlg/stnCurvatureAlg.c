@@ -116,12 +116,12 @@ void stnCurvaturePro(unsigned char **inputImg, int nrows, int ncols, double **ou
 
     
     /*stnTricky clear*/
-    for (i=0; i<nrows; i++) {
-        for (j=0; j<30; j++) {
-            binearImg[i][j]=1;
-            binearImg[i][ncols-j]=1;
-        }
-    }
+//    for (i=0; i<nrows; i++) {
+//        for (j=0; j<30; j++) {
+//            binearImg[i][j]=1;
+//            binearImg[i][ncols-j]=1;
+//        }
+//    }
     
     
     

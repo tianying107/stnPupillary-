@@ -32,17 +32,17 @@ int main(int argc, const char * argv[]) {
     double **doubleImage, **px, **py, **out1, **out2, **ppm1, **ppm2;
     double paraLeft[7]={0,0,0,0,0,0,0},paraRight[7]={0,0,0,0,0,0,0};
     /* OPEN FILES */
-    fParameter = fopen("/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/output/parameters.txt", "w");
+    fParameter = fopen("/Users/stn/Documents/PHD/output/parameters.txt", "w");
     for (int index=1; index<101; index++) {
 
         
-        char name[] = "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/dataset1/frame_0001_image.pgm";
-        snprintf(name, sizeof(name), "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/image/dataset4/frame_%.4d_image.pgm", index);
+        char name[] = "/Users/stn/Documents/PHD/pupil_data/dataset4/frame_0001_image.pgm";
+        snprintf(name, sizeof(name), "/Users/stn/Documents/PHD/pupil_data/dataset4/frame_%.4d_image.pgm", index);
 //        printf("%s\n",name);
         fpx = fopen(name,"r");
         
-        char nameout[] = "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/output/frame_0001_image.ppm";
-        snprintf(nameout, sizeof(nameout), "/Users/stn/Documents/Group/Pupilary/pupilAlg/pupilAlg/output/frame_%4d_image.ppm", index);
+        char nameout[] = "/Users/stn/Documents/PHD/output/frame_0001_image.ppm";
+        snprintf(nameout, sizeof(nameout), "/Users/stn/Documents/PHD/output/frame_%4d_image.ppm", index);
         fpy = fopen(nameout, "w");
         /* READ HEADER */
         if(read_pgm_hdr(fpx, &nrows, &ncols) < 0)

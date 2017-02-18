@@ -237,7 +237,7 @@ int connectivityLabel(int **inputImg, int nrows, int ncols, int **labeledImg){
 
 /**
  *Growth Circle algorithm, an algorithm to label the largest blob
- *Version 1.2
+ *Version 1.3
  *NEW FEAUTRES: using previous radius result to guess the starting point
  */
 void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, int radius){
@@ -251,7 +251,10 @@ void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, i
         printf("center point invalid.");
         return;
     }
+    
     for (i=0; i<500*PI; i++) {
+        if (!(centerPoint->col+radius<ncols && centerPoint->col-radius>=0 && centerPoint->row+radius<nrows && centerPoint->row-radius>=0))
+            break;
         int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
         int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
         int value1 = inputImg[row][col];
@@ -263,10 +266,13 @@ void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, i
         }
         else break;
     }
+    
     if (count>=1500) {
         for (radius=radius; radius>0; radius--) {
             count = 0;
             for (i=0; i<500*PI; i++) {
+                if (!(centerPoint->col+radius<ncols && centerPoint->col-radius>=0 && centerPoint->row+radius<nrows && centerPoint->row-radius>=0))
+                    break;
                 int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
                 int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
                 int value1 = inputImg[row][col];
@@ -288,6 +294,8 @@ void growthCircle(stnPoint *centerPoint, int **inputImg, int nrows, int ncols, i
         for (radius=radius; radius<min(min(centerPoint->col, ncols-centerPoint->col), min(centerPoint->row, nrows-centerPoint->row)); radius++) {
             count = 0;
             for (i=0; i<500*PI; i++) {
+                if (!(centerPoint->col+radius<ncols && centerPoint->col-radius>=0 && centerPoint->row+radius<nrows && centerPoint->row-radius>=0))
+                    break;
                 int col = floor(radius*cos(((double)i)/1000) + centerPoint->col);
                 int row = floor(radius*sin(((double)i)/1000) + centerPoint->row);
                 int value1 = inputImg[row][col];
@@ -519,6 +527,7 @@ void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, 
     direction = mapPlus2[direction];
     
     for (int j=0; j<8; j++) {
+        if (map[direction*2]>=0 && map[direction*2]<nrows && map[direction*2+1]>=0 && map[direction*2+1]<ncols) {
             if (inputImg[map[direction*2]][map[direction*2+1]]==1) {
                 direction = mapMinus1[direction];
             }
@@ -530,12 +539,14 @@ void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, 
                 x = map[direction*2+1];
                 break;
             }
+        }
     }
     
     while ((y-1) && (x-1) && (y+1<nrows) && (x+1<ncols) && (x!=leftPoint->col || y!=leftPoint->row)) {
-        int map[16] = {y-1,x+1,y-1,x,y-1,x-1,y,x-1,y+1,x-1,y+1,x,y+1,x+1,y,x+1};
+        map[0]=y-1;map[1]=x+1;map[2]=y-1;map[3]=x;map[4]=y-1;map[5]=x-1;map[6]=y;map[7]=x-1;map[8]=y+1;map[9]=x-1;map[10]=y+1;map[11]=x;map[12]=y+1;map[13]=x+1;map[14]=y;map[15]=x+1;
         direction = mapPlus2[direction];
         for (int j=0; j<8; j++) {
+            if (map[direction*2]>=0 && map[direction*2]<nrows && map[direction*2+1]>=0 && map[direction*2+1]<ncols) {
                 if (inputImg[map[direction*2]][map[direction*2+1]]==1) {
                     direction = mapMinus1[direction];
                 }
@@ -548,8 +559,12 @@ void stnContourBound(int **inputImg, int nrows, int ncols, stnPoint *leftPoint, 
                     break;
                 }
             }
+        }
     }
-
+    free(map);
+    free(mapPlus2);
+    free(mapMinus1);
+    
 }
 /**
  *version 1.1
